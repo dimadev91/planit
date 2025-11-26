@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "251817339784",
+    "project_id": "planit-3e80d",
+    "storage_bucket": "planit-3e80d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:251817339784:android:175408bc14e8549b74283d",
+        "android_client_info": {
+          "package_name": "com.example.plan_it"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAaoUUB1yKZfrt5XRoVFdFXrnV-WW7WH9w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
