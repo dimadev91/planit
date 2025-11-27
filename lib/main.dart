@@ -7,12 +7,7 @@ void main() async {
   debugPaintSizeEnabled = false;
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(
-    ChangeNotifierProvider(
-      create: (context) => OverlayProvider(),
-      child: PlanIt(),
-    ),
-  );
+  runApp(PlanIt());
 }
 
 class PlanIt extends StatelessWidget {

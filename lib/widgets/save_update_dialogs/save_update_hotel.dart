@@ -17,7 +17,7 @@ class _SaveUpdateHotelState extends State<SaveUpdateHotel> {
   DateTime? checkoutDateTime;
   String? accomodationName;
   String? hotelLocation;
-  bool _mapReady = false;
+  // bool _mapReady = false;
   Map<String, dynamic>? searchedLocation;
   final TextEditingController hotelNameController = TextEditingController();
   final TextEditingController hotelLocationController = TextEditingController();
@@ -199,7 +199,7 @@ class _SaveUpdateHotelState extends State<SaveUpdateHotel> {
                               initialZoom: 14.0,
                               onMapReady: () {
                                 setState(() {
-                                  _mapReady = true;
+                                  // _mapReady = true;
                                 });
                               },
                             ),
@@ -346,7 +346,6 @@ class _SaveUpdateHotelState extends State<SaveUpdateHotel> {
     );
   }
 
-  @override
   @override
   void initState() {
     super.initState();

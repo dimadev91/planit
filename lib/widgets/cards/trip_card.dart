@@ -1,15 +1,16 @@
 import 'package:plan_it/resource/exports.dart';
 
 class TripCard extends StatelessWidget {
-  late OverlayProvider overlayProvider;
   final Trip
   trip; //usando la classe trip posso accedere a tutte le proprietà impostate e quindi ai dati provenienti da firestrore
-  final VoidCallbackAction? showClose;
   final Future<void> Function()? onUpdated;
+  final currentUserId;
 
-  TripCard({required this.trip, this.showClose, this.onUpdated});
-  // Rimuovi late OverlayProvider overlayProvider; e la SetState() in TripCard.
-
+  TripCard({
+    required this.trip,
+    required this.onUpdated,
+    required this.currentUserId,
+  });
   //--------------------------------------------------------------------------formattare data
   String _formatDates(DateTime date) {
     final formatter = DateFormat('dd/MM/yy');
@@ -61,7 +62,26 @@ class TripCard extends StatelessWidget {
     }
   }
 
-  //---------------------------------------------------------------------funzione per gestire il  menu impostazioni
+  //----------------------------------------------------------------dialog
+  void openTripDialog(BuildContext context) {
+    showDialog(
+      barrierColor: Colors.transparent, // rimuove il grigio
+      context: context,
+      builder: (context) {
+        return saveUpdateTripDialog(
+          onTripSavedAndRefresh: () {
+            onUpdated!();
+            return Future.value(true);
+          },
+          dates: [trip.startDate, trip.endDate],
+          currentUserId: currentUserId,
+          tripSelected: trip,
+        );
+      },
+    );
+  }
+
+  //----------------------------------funzione per gestire il  menu impostazioni
   void _handleMenuSelection(BuildContext context, String action) {
     switch (action) {
       // ... (case 'image')
@@ -69,42 +89,9 @@ class TripCard extends StatelessWidget {
       case 'edit':
         final docId = trip.id;
         if (docId != null) {
-          OverlayEntry? overlayEntry;
-
-          overlayEntry = OverlayEntry(
-            builder: (context) => Stack(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    overlayEntry?.remove();
-                  },
-                  child: Container(
-                    color: Color(0xE30D2025),
-                    width: double.infinity,
-                    height: double.infinity,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: CreationDialog(
-                    dates: [trip.startDate, trip.endDate],
-                    currentUserId: trip.userId,
-                    tripToEdit: trip,
-                    docIdToEdit: docId,
-                    onTripSavedAndRefresh: () async {
-                      overlayEntry?.remove();
-                      onUpdated!();
-                    },
-                  ),
-                ),
-              ],
-            ),
-          );
-
-          Overlay.of(context).insert(overlayEntry);
+          openTripDialog(context);
         }
         break;
-
       case 'delete':
         _deleteTrip(context); // CHIAMA LA FUNZIONE DI ELIMINAZIONE
         break;
@@ -150,7 +137,7 @@ class TripCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(25),
                         border: Border.all(color: Color(0xFF0D2025), width: 2),
                       ),
-                      //---------------------------------------------------card's images
+                      //--------------------------------------------------------card's images
                       child: Stack(
                         children: [
                           ClipRRect(
@@ -164,6 +151,7 @@ class TripCard extends StatelessWidget {
                             ),
                           ),
                           ClipRRect(
+                            //tagli i bordi
                             borderRadius: BorderRadius.circular(23),
                             child: Image.asset(
                               width: double.infinity,
@@ -179,89 +167,25 @@ class TripCard extends StatelessWidget {
                               Container(width: 100, height: double.infinity),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  Row(
-                                    //-----------------------------------------icona impostazioni card
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      SizedBox(width: 180, height: 10),
-                                      // INIZIO: POPUP MENU BUTTON
-                                      PopupMenuButton<String>(
-                                        onSelected: (String result) {
-                                          // La logica di gestione dell'opzione selezionata sarà qui (Passo 3)
-                                          print('Opzione selezionata: $result');
-                                          _handleMenuSelection(context, result);
-                                        },
-                                        itemBuilder: (BuildContext context) =>
-                                            <PopupMenuEntry<String>>[
-                                              // Opzione 1: Modifica Viaggio (Titolo, Descrizione, Date)
-                                              const PopupMenuItem<String>(
-                                                value: 'edit',
-                                                child: Text(
-                                                  'Modify trip',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              ),
-                                              const PopupMenuDivider(
-                                                height: 1, // Linea sottile
-                                              ),
-                                              // Opzione 2: Modifica Immagine (richiederà Storage)
-                                              const PopupMenuItem<String>(
-                                                value: 'image',
-                                                child: Text(
-                                                  'Modify image',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              ),
-                                              const PopupMenuDivider(
-                                                height: 1, // Linea sottile
-                                              ),
-                                              // Opzione 3: Elimina Viaggio
-                                              const PopupMenuItem<String>(
-                                                value: 'delete',
-                                                child: Text(
-                                                  'Delete',
-                                                  style: TextStyle(
-                                                    color: Colors.red,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                        elevation:
-                                            8, // Ombreggiatura sotto il menu
-                                        shape: RoundedRectangleBorder(
-                                          // Bordo arrotondato
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                        ),
-                                        icon: Icon(
-                                          Icons.more_vert_rounded,
-                                          color: Colors.white,
-                                        ),
-                                        color: Color(
-                                          0xFF8CAAAE,
-                                        ), // Colore di sfondo del menu a tendina
-                                      ),
-                                      // FINE: POPUP MENU BUTTON
-                                    ],
-                                  ),
-                                  //-------------------------------------------------TITOLO
+                                  //--------------------------------------------TITOLO
                                   Padding(
                                     padding: const EdgeInsets.only(left: 20.0),
-                                    child: Text(
-                                      trip.title,
-                                      style: TextStyle(
-                                        color: Colors.orangeAccent,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 27,
+                                    child: SizedBox(
+                                      width: 200,
+                                      child: Text(
+                                        trip.title,
+                                        style: TextStyle(
+                                          color: Colors.orangeAccent,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 27,
+                                          height: 1.2,
+                                        ),
+                                        maxLines: 2, // massimo 2 righe
+                                        // overflow: TextOverflow
+                                        //     .ellipsis, // mostra "..." se supera le righe
+                                        softWrap: true,
                                       ),
                                     ),
                                   ),
@@ -272,11 +196,18 @@ class TripCard extends StatelessWidget {
                                       mainAxisAlignment:
                                           MainAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          trip.description!,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18,
+                                        SizedBox(
+                                          width: 200,
+                                          child: Text(
+                                            trip.description!,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                            ),
+                                            maxLines: 2, // massimo 2 righe
+                                            overflow: TextOverflow
+                                                .ellipsis, // mostra "..." se supera le righe
+                                            softWrap: true,
                                           ),
                                         ),
                                       ],
@@ -298,7 +229,7 @@ class TripCard extends StatelessWidget {
                                       ),
                                     ],
                                   ),
-                                  //----------------------------------------------------DATE
+                                  //--------------------------------------------DATE
                                   Padding(
                                     padding: const EdgeInsets.only(
                                       top: 5,
@@ -326,6 +257,70 @@ class TripCard extends StatelessWidget {
                               ),
                             ],
                           ),
+                          //----------------------------------------------------PULSANTE 3 DOTS
+                          Align(
+                            alignment: Alignment.topRight,
+
+                            child: PopupMenuButton<String>(
+                              onSelected: (String result) {
+                                // La logica di gestione dell'opzione selezionata sarà qui (Passo 3)
+                                print('Opzione selezionata: $result');
+                                _handleMenuSelection(context, result);
+                              },
+                              itemBuilder: (BuildContext context) =>
+                                  <PopupMenuEntry<String>>[
+                                    // Opzione 1: Modifica Viaggio (Titolo, Descrizione, Date)
+                                    const PopupMenuItem<String>(
+                                      value: 'edit',
+                                      child: Text(
+                                        'Modify trip',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    const PopupMenuDivider(
+                                      height: 1, // Linea sottile
+                                    ),
+                                    // Opzione 2: Modifica Immagine (richiederà Storage)
+                                    const PopupMenuItem<String>(
+                                      value: 'image',
+                                      child: Text(
+                                        'Modify image',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    const PopupMenuDivider(
+                                      height: 1, // Linea sottile
+                                    ),
+                                    // Opzione 3: Elimina Viaggio
+                                    const PopupMenuItem<String>(
+                                      value: 'delete',
+                                      child: Text(
+                                        'Delete',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                              elevation: 8, // Ombreggiatura sotto il menu
+                              shape: RoundedRectangleBorder(
+                                // Bordo arrotondato
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              icon: Icon(
+                                Icons.more_vert_rounded,
+                                color: Colors.white,
+                              ),
+                              color: Color(
+                                0xFF8CAAAE,
+                              ), // Colore di sfondo del menu a tendina
+                            ),
+                          ),
+                          // FINE: POPUP MENU BUTTON]
                         ],
                       ),
                     ),

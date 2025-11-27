@@ -9,54 +9,31 @@ class CreationScreen extends StatefulWidget {
 }
 
 class _CreationScreenState extends State<CreationScreen> {
-  late OverlayEntry _overlayEntry;
   bool isVisible = false;
   List<DateTime> dates = [];
   String? _currentUserId;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final _tripListKey = GlobalKey<_TripListScreenState>();
-
-  OverlayEntry _createOverlayEntry() {
-    if (_currentUserId == null) {
-      return OverlayEntry(builder: (context) => Container());
-    }
-
-    return OverlayEntry(
-      builder: (overlayContext) => Stack(
-        children: [
-          GestureDetector(
-            onTap: () {
-              _overlayEntry.remove();
-              isVisible = false;
-            },
-            child: Container(
-              color: Color(0xFF20272A),
-              width: double.infinity,
-              height: double.infinity,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(30),
-            child: CreationDialog(
-              onTripSavedAndRefresh: () {
-                showHideOverlay();
-                _tripListKey.currentState?.refreshTrips();
-                return Future.value(
-                  true,
-                ); // oppure Future.value(true) se è async
-              },
-
-              dates: dates,
-              currentUserId: _currentUserId!,
-              tripToEdit: null,
-              docIdToEdit: null,
-            ),
-          ),
-        ],
-      ),
+  //------------------------------------------------------------------------------dialog crea/modifica
+  void openTripDialog(BuildContext context) {
+    showDialog(
+      barrierColor: Colors.transparent, // rimuove il grigio
+      context: context,
+      builder: (context) {
+        return saveUpdateTripDialog(
+          onTripSavedAndRefresh: () {
+            _tripListKey.currentState?.refreshTrips();
+            return Future.value(true);
+          },
+          dates: dates,
+          currentUserId: _currentUserId!,
+          tripSelected: null,
+        );
+      },
     );
   }
 
+  //-------------------------------------------------------------------------
   Future<void> _initializeUser() async {
     User? user = _auth.currentUser;
 
@@ -81,142 +58,110 @@ class _CreationScreenState extends State<CreationScreen> {
     }
   }
 
-  void showHideOverlay() {
-    if (!isVisible) {
-      _overlayEntry = _createOverlayEntry();
-      Overlay.of(context).insert(_overlayEntry);
-      isVisible = true;
-    } else {
-      isVisible = false;
-      _overlayEntry.remove();
-    }
-  }
-
   @override
   void initState() {
     super.initState();
     Future.delayed(Duration(milliseconds: 1000), _initializeUser);
-
-    final overlayProvider = context.read<OverlayProvider>();
-    overlayProvider.addListener(() {
-      if (overlayProvider.isVisible != isVisible) {
-        showHideOverlay();
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer(
-      builder: (context, OverlayProvider overlayProvider, child) {
-        if (overlayProvider.isVisible != isVisible) {
-          showHideOverlay();
-        }
-
-        return Scaffold(
-          floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-          floatingActionButton: SizedBox(
-            height: 50,
-            width: 50,
-            child: FloatingActionButton(
-              backgroundColor: const Color(0xFFF5AD2B),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
+    return Scaffold(
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      floatingActionButton: SizedBox(
+        height: 50,
+        width: 50,
+        child: FloatingActionButton(
+          backgroundColor: const Color(0xFFF5AD2B),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+          //aggiungiamo l'operatore perchè l'inizializzazione dell'utente ha un ritardo -perchè lanimazione giri-
+          onPressed: _currentUserId == null
+              ? null
+              : () => openTripDialog(context),
+          child: Icon(Icons.add, size: 40, color: Colors.white),
+        ),
+      ),
+      backgroundColor: const Color(0xFF0B161A),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.06,
+              child: Image.asset(
+                'assets/images/sfondo4.png',
+                fit: BoxFit.cover,
               ),
-              onPressed: _currentUserId == null
-                  ? null
-                  : () {
-                      showHideOverlay();
-                    },
-              child: Icon(Icons.add, size: 40, color: Colors.white),
             ),
           ),
-          backgroundColor: const Color(0xFF0B161A),
-          body: Stack(
-            children: [
-              Positioned.fill(
-                child: Opacity(
-                  opacity: 0.06,
-                  child: Image.asset(
-                    'assets/images/sfondo4.png',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.topCenter,
-                child: Stack(
-                  children: [
-                    Material(
-                      elevation: 3,
-                      color: Colors.transparent,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        height: 90,
-                        child: ClipRect(
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(5),
-                                color: Color(0xFF527882).withOpacity(0.30),
-                              ),
-                              height: 3,
-                              width: double.infinity,
-                            ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: Stack(
+              children: [
+                Material(
+                  elevation: 3,
+                  color: Colors.transparent,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    height: 90,
+                    child: ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            color: Color(0xFF527882).withOpacity(0.30),
                           ),
+                          height: 3,
+                          width: double.infinity,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              Center(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 35.0, left: 20),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Hero(
-                        tag: 'logoAccent',
-                        child: Image.asset(
-                          'assets/images/logo/loghiAccent.png',
-                          height: 40,
-                        ),
-                      ),
-                    ],
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 90, left: 25, right: 25),
-                child: _currentUserId == null
-                    ? Center(
-                        child: CircularProgressIndicator(
-                          color: const Color(0xFFF5AD2B),
-                        ),
-                      )
-                    : TripListScreen(
-                        key: _tripListKey,
-                        userId: _currentUserId!,
-                        showClose: showHideOverlay,
-                      ),
-              ),
-            ],
+              ],
+            ),
           ),
-        );
-      },
+          Center(
+            child: Padding(
+              padding: EdgeInsets.only(top: 35.0, left: 20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Hero(
+                    tag: 'logoAccent',
+                    child: Image.asset(
+                      'assets/images/logo/loghiAccent.png',
+                      height: 40,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 90, left: 25, right: 25),
+            child: _currentUserId == null
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: const Color(0xFFF5AD2B),
+                    ),
+                  )
+                : TripListScreen(key: _tripListKey, userId: _currentUserId!),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class TripListScreen extends StatefulWidget {
   final String userId;
-  final VoidCallback showClose;
 
-  TripListScreen({required this.userId, super.key, required this.showClose});
+  TripListScreen({required this.userId, super.key});
 
   @override
   State<TripListScreen> createState() => _TripListScreenState();
@@ -286,7 +231,11 @@ class _TripListScreenState extends State<TripListScreen> {
         itemCount: trips.length,
         itemBuilder: (context, index) {
           final trip = trips[index];
-          return TripCard(trip: trip, onUpdated: refreshTrips);
+          return TripCard(
+            trip: trip,
+            onUpdated: refreshTrips,
+            currentUserId: widget.userId,
+          );
         },
       ),
     );

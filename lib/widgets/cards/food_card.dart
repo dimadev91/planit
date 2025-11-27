@@ -24,7 +24,6 @@ class FoodCard extends StatefulWidget {
 }
 
 class _FoodCardState extends State<FoodCard> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   DateTime? restTime;
   String? restName;
   String? budget;

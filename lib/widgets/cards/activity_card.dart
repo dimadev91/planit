@@ -24,7 +24,6 @@ class ActivityCard extends StatefulWidget {
 }
 
 class _ActivityCardState extends State<ActivityCard> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   DateTime? activityTime;
   String? activityTitle;
   String? budget;

@@ -23,10 +23,8 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
   final TextEditingController activityTitleController = TextEditingController();
   final TextEditingController activityLocationController =
       TextEditingController();
-  final TextEditingController searchController = TextEditingController();
-  MapController mapPickerController = MapController();
   final TextEditingController priceController = TextEditingController();
-
+  //-----------------------------------------------------------------------load dati se ci sono aggiorna ui
   Future<void> _loadActivity() async {
     if (widget.existingEvent != null) {
       // Inizializza dai dati dell'evento esistente
@@ -53,6 +51,7 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
     setState(() {});
   }
 
+  //---------------------------------------------------------------------------funzione aggiorna crea
   Future<void> _saveActivityDetails() async {
     // Fallback per la location
     String finalLocation =
@@ -87,7 +86,7 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
         final doc = await tripRef.get();
 
         if (doc.exists) {
-          final docData = doc.data() as Map<String, dynamic>?;
+          final docData = doc.data();
           List existingActivities = [];
           if (docData != null && docData.containsKey('food')) {
             existingActivities = List.from(docData['food']);
@@ -138,73 +137,7 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
     }
   }
 
-  String _formattaPlacemark(Placemark p) {
-    final city = p.locality ?? '';
-    final street = p.street ?? '';
-
-    // street spesso è già "via + civico", quindi basta dividere
-    final parts = street.split(',');
-    final onlyStreet = parts.first.trim();
-
-    return "$onlyStreet, $city";
-  }
-
-  // ---------------------------------------------------------------------------Funzione di Geocoding per la Ricerca
-  Future<void> searchLocation(
-    String query,
-    BuildContext context, {
-    String? activityName,
-  }) async {
-    if (query.isEmpty) return;
-
-    try {
-      final locations = await locationFromAddress(query);
-      if (locations.isEmpty) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('No results found.')));
-        }
-        return;
-      }
-
-      final loc = locations.first;
-      final placemarks = await placemarkFromCoordinates(
-        loc.latitude,
-        loc.longitude,
-      );
-
-      String formattedAddress = placemarks.isNotEmpty
-          ? _formattaPlacemark(placemarks.first)
-          : query;
-
-      // Se vuoi includere anche il nome dell’attività
-      if (activityName != null && activityName.isNotEmpty) {
-        formattedAddress = '$activityName, $formattedAddress';
-      }
-
-      // aggiorno la mappa
-      mapPickerController.move(LatLng(loc.latitude, loc.longitude), 16);
-
-      // salvo per il bottone
-      searchedLocation = {
-        'lat': loc.latitude,
-        'lon': loc.longitude,
-        'adress': formattedAddress,
-      };
-      activityLocation = formattedAddress;
-      restTitle = query;
-      setState(() {}); // aggiorna la UI del dialog
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Search error: $e')));
-      }
-    }
-  }
-
-  // Aggiungi questa funzione dentro _SaveUpdateActivityState
+  // ---------------------------------------------------------------------------funzione elimina
   Future<void> _deleteActivity() async {
     if (widget.tripDocId == null || widget.existingEvent == null) return;
 
@@ -219,13 +152,13 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
 
         // Confronta usando Timestamp invece di stringa
         existingActivities.removeWhere((a) {
-          final aTime = a['activityTime'];
+          final aTime = a['restTime'];
           if (aTime is Timestamp) {
             return aTime.toDate() == widget.existingEvent!.datetime &&
-                a['activityName'] == widget.existingEvent!.title;
+                a['restName'] == widget.existingEvent!.title;
           } else if (aTime is String) {
             return DateTime.tryParse(aTime) == widget.existingEvent!.datetime &&
-                a['activityName'] == widget.existingEvent!.title;
+                a['restName'] == widget.existingEvent!.title;
           }
           return false;
         });
@@ -236,189 +169,42 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
       if (widget.onDataSaved != null) widget.onDataSaved!();
 
       Navigator.pop(context);
-      print("✅ Activity deleted successfully.");
+      print("✅ food deleted successfully.");
     } catch (e) {
-      print("!!! Error during activity deletion: $e");
+      print("!!! Error during food deletion: $e");
     }
   }
 
   //----------------------------------------------------------------------------MAPPA
-  void openMapDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          //--------------------------------------------------------------------contenitore esterno
-          child: Container(
-            height: 350,
-            width: 340,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Stack(
-              children: [
-                Container(
-                  //------------------------------------------------------------contenitore interno
-                  height: 350,
-                  width: 350,
-                  decoration: BoxDecoration(
-                    color: Color(0xFF7D9EA2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                Column(
-                  children: [
-                    SizedBox(height: 10),
-                    Align(
-                      alignment: Alignment.topCenter,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(25),
-                        child: SizedBox(
-                          height: 300,
-                          width: 300,
-                          child: FlutterMap(
-                            mapController: mapPickerController,
-                            options: MapOptions(
-                              initialCenter: LatLng(
-                                41.9027835,
-                                12.4963655,
-                              ), // Roma
-                              initialZoom: 14.0,
-                              onMapReady: () {
-                                setState(() {});
-                              },
-                            ),
-                            children: [
-                              TileLayer(
-                                // Questo è l'URL per le tessere di OpenStreetMap, gratuito
-                                urlTemplate:
-                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                userAgentPackageName: 'com.example.plan_it',
-                              ),
-                              Positioned(
-                                top: 10,
-                                left: 10,
-                                right: 10,
-                                child: Card(
-                                  elevation: 4.0,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0,
-                                    ),
-                                    child: TextField(
-                                      controller: searchController,
-                                      decoration: InputDecoration(
-                                        hintText: 'Search for your destination',
-
-                                        border: InputBorder.none,
-                                      ),
-                                      onSubmitted: (value) async {
-                                        await searchLocation(
-                                          searchController.text,
-                                          context,
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // 2. Livello delle Tessere (Mappa Base)
-
-                              // 3. L'Icona Fissa al Centro dello Schermo
-                              const Center(
-                                child: Icon(
-                                  Icons.location_pin,
-                                  size: 45,
-                                  color: Colors.red,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Padding(
-                  //-----------------------------------------------------------BOTTONI CHIUSURA
-                  padding: const EdgeInsets.all(8.0),
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          //----------------------------------------------bottone ricerca
-                          child: GestureDetector(
-                            onTap: () async {
-                              // CHIAMA LA FUNZIONE DI RICERCA
-                              await searchLocation(
-                                searchController.text,
-                                context,
-                              );
-                            },
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFF5AD2B),
-                                borderRadius: BorderRadius.only(
-                                  bottomLeft: Radius.circular(25),
-                                ),
-                              ),
-                              width: double.infinity,
-                              height: 45,
-                              child: const Center(
-                                child: Icon(Icons.search, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Container(width: 2, height: 45, color: Colors.white),
-                        Expanded(
-                          //------------------------------------------- bottone chiusura
-                          child: GestureDetector(
-                            onTap: () async {
-                              // Chiudo il dialog
-                              Navigator.of(context).pop();
-
-                              // Se la ricerca ha funzionato, uso searchedLocation; altrimenti testo del controller
-                              final locToUse =
-                                  searchedLocation?['adress'] ??
-                                  activityLocationController.text;
-
-                              // Aggiorno il controller principale
-                              activityLocationController.text = locToUse;
-
-                              // Aggiorno variabile interna
-                              activityLocation = locToUse;
-
-                              setState(() {});
-                              print(activityLocationController.text);
-                            },
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFF5AD2B),
-                                borderRadius: BorderRadius.only(
-                                  bottomRight: Radius.circular(25),
-                                ),
-                              ),
-                              width: double.infinity,
-                              height: 45,
-                              child: const Center(
-                                child: Icon(Icons.check, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+  void openMapDialog() async {
+    final Map<String, dynamic>? result =
+        await showDialog<Map<String, dynamic>?>(
+          context: context,
+          builder: (context) {
+            return MapDialog(
+              // Passiamo solo i dati attuali al dialogo
+              activityLocation: activityLocationController.text.isEmpty
+                  ? null
+                  : activityLocationController.text,
+              activityTitle: activityTitleController.text.isEmpty
+                  ? null
+                  : activityTitleController.text,
+              searchedLocation: searchedLocation,
+              activityLocationController: activityLocationController,
+            );
+          },
         );
-      },
-    );
+
+    // 2. Se il risultato è valido, AGGIORNA lo stato locale del genitore
+    if (result != null && result.containsKey('adress')) {
+      setState(() {
+        searchedLocation = result;
+        // Aggiorna il controller di testo locale per aggiornare la UI
+        activityLocationController.text = result['adress'];
+        activityLocation =
+            result['adress']; // Aggiorna anche la variabile di stato per coerenza
+      });
+    }
   }
 
   @override

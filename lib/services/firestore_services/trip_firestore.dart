@@ -1,5 +1,4 @@
 // File: trip_firestore.dart
-
 import 'package:plan_it/resource/exports.dart';
 import 'package:plan_it/services/firestore_services/activity_firestore.dart';
 
@@ -10,8 +9,11 @@ class Trip {
   final DateTime endDate;
   final String userId;
   final String? id;
-  final Flight? flightDetails;
-  final Hotel? hotelDetails;
+  // le seguenti non sono final, altrimenti per cambiare i valori bisognerebbe ricostruire da capo l'oggetto ---> non efficiente
+  Flight? flightDetails; //---potrò poi chiamarli con trip.flightdetails
+  Hotel? hotelDetails;
+  List<Activity> activities = [];
+  List<Food> food = [];
 
   Trip({
     required this.title,
@@ -20,6 +22,7 @@ class Trip {
     required this.endDate,
     required this.userId,
     this.id,
+    // activities e food non sono nel costruttore perchè abbiamo assegnato dei valori momentanei come liste vuote
     this.flightDetails,
     this.hotelDetails,
   });
@@ -42,7 +45,7 @@ class Trip {
     final flightMap = firestore['flight'] as Map<String, dynamic>?;
     final hotelMap = firestore['hotel'] as Map<String, dynamic>?;
 
-    return Trip(
+    final trip = Trip(
       id: id,
       title: firestore['title'] as String,
       description: firestore['description'] as String?,
@@ -52,6 +55,24 @@ class Trip {
       flightDetails: flightMap != null ? Flight.fromMap(flightMap) : null,
       hotelDetails: hotelMap != null ? Hotel.fromMap(hotelMap) : null,
     );
+    // il seguente popola invece le liste
+    final activitiesList = firestore['activities'] as List<dynamic>?;
+    if (activitiesList != null) {
+      trip.activities = activitiesList
+          .whereType<Map<String, dynamic>>()
+          .map((a) => Activity.fromMap(a))
+          .toList();
+    }
+
+    final foodList = firestore['food'] as List<dynamic>?;
+    if (foodList != null) {
+      trip.food = foodList
+          .whereType<Map<String, dynamic>>()
+          .map((f) => Food.fromMap(f))
+          .toList();
+    }
+
+    return trip;
   }
 
   // restituisce tripData: Map<String, dynamic>?)

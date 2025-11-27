@@ -264,33 +264,31 @@ class _DetailsScreenState extends State<DetailsScreen> {
               Stack(
                 children: [
                   //-----------------------------------------------------------TITOlO VIAGGIO
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 30),
-                      child: Text(
-                        // Usa _currentTrip.title per essere sicuro che sia l'ultimo dato
-                        toUpper(),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.orangeAccent.withOpacity(0.8),
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
+                  Padding(
+                    padding: const EdgeInsets.only(top: 30),
+                    child: Column(
+                      children: [
+                        Text(
+                          // Usa _currentTrip.title per essere sicuro che sia l'ultimo dato
+                          toUpper(),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            height: 1.0,
+                            color: Colors.orangeAccent.withOpacity(0.8),
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
-                  //------------------------------------------------------------DATE
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 80),
-                      child: Text(
-                        widget.dates!,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
+                        //------------------------------------------------------------DATE
+                        Text(
+                          widget.dates!,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ],
