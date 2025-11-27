@@ -1,23 +1,5 @@
 import 'package:plan_it/resource/exports.dart';
-
-//-----------------------------------unita base della timeline
-class TimelineEvent {
-  final DateTime datetime;
-  final String title;
-  final IconData icon;
-  String? description;
-  String? duration;
-  double? price;
-
-  TimelineEvent({
-    required this.datetime,
-    required this.title,
-    required this.icon,
-    this.description,
-    this.price,
-    this.duration,
-  });
-}
+import 'package:plan_it/services/timeline_event_class.dart';
 
 class TimelineWidget extends StatelessWidget {
   final String tripId;

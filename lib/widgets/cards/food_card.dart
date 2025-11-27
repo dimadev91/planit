@@ -1,6 +1,6 @@
 import 'package:plan_it/resource/exports.dart';
-import 'package:plan_it/widgets/cards/activity_card.dart';
-import 'package:plan_it/widgets/timeline.dart';
+import 'package:plan_it/services/timeline_event_class.dart';
+import 'package:plan_it/widgets/cards/mini_card.dart';
 
 class FoodCard extends StatefulWidget {
   final String? tripId;
@@ -35,62 +35,16 @@ class _FoodCardState extends State<FoodCard> {
     super.initState();
 
     loadEvents();
+    print(loadEvents());
   }
 
   Future<void> loadEvents() async {
-    print('1');
-    if (widget.tripId == null) return;
-
-    try {
-      final foodList = await Trip.fetchFoodDetails(widget.tripId!);
-
-      List<TimelineEvent> newEvents = [];
-      DateTime? earliestTime;
-      print('2');
-      if (foodList.isNotEmpty) {
-        print('3');
-        for (final food in foodList) {
-          print('4');
-          if (food.restTime != null && food.restName != null) {
-            print('5');
-            newEvents.add(
-              TimelineEvent(
-                datetime: food.restTime!,
-                title: food.restName!,
-                description: food.restLocation,
-                icon: Icons.restaurant,
-                price: food.restPriceRange,
-              ),
-            );
-
-            // Trova l'orario più anticipato per il riepilogo della card
-            if (earliestTime == null || food.restTime!.isBefore(earliestTime)) {
-              print('6');
-              earliestTime = food.restTime;
-            }
-          }
-        }
-      }
-
-      events = newEvents;
-
-      // Aggiorna le variabili di stato della Card di riepilogo
-      restTime = earliestTime;
-      if (restTime != null && foodList.isNotEmpty) {
-        final earliestFood = foodList.firstWhere((f) => f.restTime == restTime);
-        restName = earliestFood.restName;
-        restLocation = earliestFood.restLocation ?? '';
-      } else {
-        print('8');
-        restName = null;
-        restLocation = '';
-      }
-
-      setState(() {});
-    } catch (e) {
-      print("Error loading food events: $e");
-    }
-    print(events);
+    print('questi sono i food details:${widget.foodDetails}');
+    final list = widget.foodDetails ?? [];
+    setState(() {
+      events = TimelineEventMapper.fromFood(list);
+    });
+    print('questi sono gli eventi:$events');
   }
 
   String formatDateTime(DateTime dateTime) {
@@ -140,7 +94,7 @@ class _FoodCardState extends State<FoodCard> {
               padding: const EdgeInsets.only(top: 40.0, right: 3, left: 3),
               child: SizedBox(
                 height: 220,
-                child: ActivityTag(events: events, onTap: widget.onTap),
+                child: MiniCard(events: events, onTap: widget.onTap),
               ),
             ),
 

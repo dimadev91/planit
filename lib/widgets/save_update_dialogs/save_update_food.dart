@@ -1,5 +1,5 @@
 import 'package:plan_it/resource/exports.dart';
-import 'package:plan_it/widgets/timeline.dart';
+import 'package:plan_it/services/timeline_event_class.dart';
 
 class SaveUpdateFood extends StatefulWidget {
   final String? tripDocId;
@@ -27,27 +27,21 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
   //-----------------------------------------------------------------------load dati se ci sono aggiorna ui
   Future<void> _loadActivity() async {
     if (widget.existingEvent != null) {
-      // Inizializza dai dati dell'evento esistente
+      // inizializza dai dati dell'evento esistente
       final e = widget.existingEvent!;
       restTime = e.datetime;
       activityTitleController.text = e.title;
-      activityLocationController.text = e.description!;
-      restTitle = e.title;
-      activityLocation = e.description;
+      activityLocationController.text = e.description ?? '';
       priceController.text = e.price?.toString() ?? '';
-    } else if (widget.tripDocId != null) {
-      foodDetails = await Trip.fetchFoodDetails(widget.tripDocId!);
-      // Controlla se ci sono elementi e usa SOLO il primo, se presente.
-      if (foodDetails != null && foodDetails!.isNotEmpty) {
-        final food = foodDetails!.first; // <-- Modificato
-        restTime = food.restTime;
-        activityTitleController.text = food.restName ?? '';
-        activityLocationController.text = food.restLocation ?? '';
-        restTitle = food.restName;
-        activityLocation = food.restLocation;
-        priceController.text = food.restPriceRange?.toString() ?? '';
-      }
+    } else {
+      // nuovo evento: resetta tutto
+      restTime = null;
+      activityTitleController.clear();
+      activityLocationController.clear();
+      priceController.clear();
+      searchedLocation = null;
     }
+
     setState(() {});
   }
 
@@ -87,13 +81,13 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
 
         if (doc.exists) {
           final docData = doc.data();
-          List existingActivities = [];
+          List existingFood = [];
           if (docData != null && docData.containsKey('food')) {
-            existingActivities = List.from(docData['food']);
+            existingFood = List.from(docData['food']);
           }
 
           if (widget.existingEvent != null) {
-            final index = existingActivities.indexWhere((a) {
+            final index = existingFood.indexWhere((a) {
               final aTime = a['restTime'];
               if (aTime is Timestamp) {
                 return aTime.toDate() == widget.existingEvent!.datetime &&
@@ -110,15 +104,15 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
             });
 
             if (index != -1) {
-              existingActivities[index] = activityMap;
+              existingFood[index] = activityMap;
             } else {
-              existingActivities.add(activityMap);
+              existingFood.add(activityMap);
             }
           } else {
-            existingActivities.add(activityMap);
+            existingFood.add(activityMap);
           }
 
-          await tripRef.update({'food': existingActivities});
+          await tripRef.update({'food': existingFood});
           print("✅ Food saved/updated successfully.");
         }
       } else {

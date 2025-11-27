@@ -1,8 +1,7 @@
 import 'package:plan_it/resource/exports.dart';
 import 'package:plan_it/services/firestore_services/activity_firestore.dart';
-import 'package:plan_it/widgets/cards/activity_card.dart';
-import 'package:plan_it/widgets/cards/detailed_card.dart';
-import 'package:plan_it/widgets/cards/hotel_card.dart';
+import 'package:plan_it/services/timeline_event_class.dart';
+import 'package:plan_it/widgets/card_set.dart';
 import 'package:plan_it/widgets/timeline.dart';
 
 class DetailsScreen extends StatefulWidget {
@@ -316,134 +315,25 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   child: PageView(
                     scrollDirection: Axis.horizontal,
                     children: [
-                      ListView(
-                        scrollDirection: Axis.vertical,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 30.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () {
-                                        openFlightDialog(context);
-                                      },
-                                      child:
-                                          (flightDetails != null &&
-                                              flightDetails!.outboundDateTime !=
-                                                  null &&
-                                              flightDetails!.returnDateTime !=
-                                                  null)
-                                          ? FlightCard(
-                                              flightDetails: flightDetails,
-                                              imageAsset:
-                                                  'assets/images/cards/aereo.png',
-                                              title: 'Flights',
-                                            )
-                                          : DetailsCard(
-                                              imageAsset:
-                                                  'assets/images/cards/aereo.png',
-                                              title: 'Flight',
-                                            ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          openHotelDialog(context);
-                                        });
-                                      },
-                                      child:
-                                          hotelDetails != null &&
-                                              hotelDetails!.checkIn != null &&
-                                              hotelDetails!.checkOut != null
-                                          ? HotelCard(
-                                              imageAsset:
-                                                  'assets/images/cards/letto.png',
-                                              title: 'Hotel',
-                                              hotelDetails: hotelDetails,
-                                            )
-                                          : DetailsCard(
-                                              imageAsset:
-                                                  'assets/images/cards/letto.png',
-                                              title: 'Hotel',
-                                            ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    activityDetails.isNotEmpty
-                                        ? ActivityCard(
-                                            activityDetails: activityDetails,
-                                            tripId: widget.tripId,
-                                            imageAsset:
-                                                'assets/images/cards/omino.png',
-                                            title: 'Activities',
-                                            onAdd: () {
-                                              openActivitiesDialog(
-                                                context,
-                                              ); // aggiungi nuova attività
-                                            },
-                                            onTap: (TimelineEvent event) {
-                                              openActivitiesDialog(
-                                                context,
-                                                event:
-                                                    event, // passi l'evento selezionato per modifica
-                                              );
-                                            },
-                                          )
-                                        : GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                openActivitiesDialog(context);
-                                              });
-                                            },
-                                            child: DetailsCard(
-                                              imageAsset:
-                                                  'assets/images/cards/omino.png',
-                                              imageHeight: 80,
-                                              title: 'Activities',
-                                            ),
-                                          ),
-                                    foodDetails.isNotEmpty
-                                        ? FoodCard(
-                                            tripId: widget.tripId,
-                                            imageAsset:
-                                                'assets/images/cards/food.png',
-                                            title: 'Food',
-                                            onAdd: () {
-                                              openFoodDialog(context);
-                                            },
-                                            onTap: (TimelineEvent event) {
-                                              openFoodDialog(
-                                                context,
-                                                event:
-                                                    event, // passi l'evento selezionato per modifica
-                                              );
-                                            },
-                                          )
-                                        : GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                openFoodDialog(context);
-                                              });
-                                            },
-                                            child: DetailsCard(
-                                              imageAsset:
-                                                  'assets/images/cards/food.png',
-                                              title: 'Food',
-                                            ),
-                                          ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                      CardSet(
+                        openFlightDialog: () {
+                          openFlightDialog(context);
+                        },
+                        openHotelDialog: () {
+                          openHotelDialog(context);
+                        },
+                        openFoodDialog: (context, {TimelineEvent? event}) {
+                          openFoodDialog(context, event: event);
+                        },
+                        openActivitiesDialog:
+                            (context, {TimelineEvent? event}) {
+                              openActivitiesDialog(context, event: event);
+                            },
+                        tripId: widget.tripId,
+                        activityDetails: activityDetails,
+                        foodDetails: foodDetails,
+                        flightDetails: flightDetails,
+                        hotelDetails: hotelDetails,
                       ),
                       Padding(
                         padding: const EdgeInsets.only(top: 50.0),

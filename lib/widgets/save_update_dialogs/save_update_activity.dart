@@ -1,6 +1,6 @@
 import 'package:plan_it/resource/exports.dart';
 import 'package:plan_it/services/firestore_services/activity_firestore.dart';
-import 'package:plan_it/widgets/timeline.dart';
+import 'package:plan_it/services/timeline_event_class.dart';
 
 class SaveUpdateActivity extends StatefulWidget {
   final String? tripDocId;
