@@ -1,6 +1,4 @@
 import 'package:plan_it/resource/exports.dart';
-import 'package:plan_it/services/firestore_services/activity_firestore.dart';
-import 'package:plan_it/services/timeline_event_class.dart';
 import 'package:plan_it/widgets/card_set.dart';
 import 'package:plan_it/widgets/timeline.dart';
 
@@ -20,119 +18,16 @@ class _DetailsScreenState extends State<DetailsScreen> {
   Trip? _currentTrip;
   bool _isLoading = true;
   String? title;
-  Flight? flightDetails;
-  Hotel? hotelDetails;
-  List<Activity> activityDetails = [];
-  List<Food> foodDetails = [];
   TimelineService? timelineService;
 
+  //---------------------funzione per caratteri maiuscoli
   String toUpper() {
     title = _currentTrip!.title.toUpperCase();
     return title!;
   }
 
-  //------------------------------------------------------------------------APRIRE I DIALOG
-  void openFlightDialog(BuildContext context) {
-    if (widget.tripId == null) {
-      print("Errore: tripId è nullo, non posso aprire il dialogo.");
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return SaveUpdateFlights(
-          tripDocId: widget.tripId!,
-          //----------------------------------------------------------Chiamerà _fetchTripDetails dopo il salvataggio
-          onDataSaved: () async {
-            _fetchTripDetails();
-            await fetch(); // <-- aggiungi questo
-            timelineService!.loadTimeline().then((_) {
-              setState(() {});
-            });
-            if (!mounted) return; // ← controlla se il widget è ancora nel tree
-            setState(() {});
-          },
-        );
-      },
-    );
-  }
-
-  void openHotelDialog(BuildContext context) {
-    if (widget.tripId == null) {
-      print("Errore: tripId è nullo, non posso aprire il dialogo.");
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return SaveUpdateHotel(
-          tripDocId: widget.tripId!,
-          onDataSaved: () async {
-            await _fetchTripDetails();
-            await fetch();
-            timelineService!.loadTimeline().then((_) {
-              setState(() {});
-            });
-            if (!mounted) return; // ← controlla se il widget è ancora nel tree
-            setState(() {});
-          },
-        );
-      },
-    );
-  }
-
-  void openActivitiesDialog(BuildContext context, {TimelineEvent? event}) {
-    if (widget.tripId == null) return;
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return SaveUpdateActivity(
-          existingEvent:
-              event, // qui passi l’event se c’è, altrimenti null per nuova attività
-          tripDocId: widget.tripId!,
-          onDataSaved: () async {
-            await _fetchTripDetails();
-            await fetch();
-            timelineService!.loadTimeline().then((_) {
-              setState(() {});
-            });
-            if (!mounted) return;
-            setState(() {});
-          },
-        );
-      },
-    );
-  }
-
-  void openFoodDialog(BuildContext context, {TimelineEvent? event}) {
-    if (widget.tripId == null) return;
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return SaveUpdateFood(
-          existingEvent:
-              event, // qui passi l’event se c’è, altrimenti null per nuova attività
-          tripDocId: widget.tripId!,
-          onDataSaved: () async {
-            await _fetchTripDetails();
-            await fetch();
-            timelineService!.loadTimeline().then((_) {
-              setState(() {});
-            });
-            if (!mounted) return;
-            setState(() {});
-          },
-        );
-      },
-    );
-  }
-
   //--------------------------------------------------------------------FUNZIONE PER PRENDERE I DETAILS
-  Future<void> _fetchTripDetails() async {
+  Future<void> fetchTripDetails() async {
     if (widget.tripId == null) return;
 
     setState(() {
@@ -160,35 +55,19 @@ class _DetailsScreenState extends State<DetailsScreen> {
         _currentTrip = null;
       });
     }
+    setState(() {});
   }
 
-  Future fetch() async {
-    if (widget.tripId == null) return;
-    final newFlight = await Trip.fetchFlightDetails(widget.tripId!);
-    final newHotel = await Trip.fetchHotelDetails(widget.tripId!);
-    // newActivity ora è List<Activity>
-    final List<Activity> newActivity = await Trip.fetchActivityDetails(
-      widget.tripId!,
-    );
-    final newFood = await Trip.fetchFoodDetails(widget.tripId!);
-
-    setState(() {
-      flightDetails = newFlight;
-      hotelDetails = newHotel;
-      activityDetails = newActivity; // Assegna la lista
-      foodDetails = newFood;
-    });
+  //--------------------------------------------------------------------refresh cardset senza query
+  void refreshCardSet() {
+    setState(() {});
   }
 
   //-----------------------------------------------------------------------------refresh pagina
   Future<void> _handleRefresh() async {
     // Ricarica prima i dettagli base del viaggio
-    await _fetchTripDetails();
-    // Ricarica tutti i dettagli (Flight, Hotel, Activity, Food)
-    await fetch();
-    // Ricarica la Timeline
+    await fetchTripDetails();
     await timelineService!.loadTimeline();
-
     // Forza il refresh dell'UI dopo il caricamento
     if (mounted) {
       setState(() {});
@@ -200,15 +79,13 @@ class _DetailsScreenState extends State<DetailsScreen> {
     super.initState();
     // ----------------------------------------------------------------Avvia il caricamento dei dettagli del viaggio all'apertura
     if (widget.tripId != null) {
-      _fetchTripDetails();
+      fetchTripDetails();
     } else {
       // --------------------------------------------------------------Caso in cui tripId è nullo (dovrebbe essere evitato se possibile)
       setState(() {
         _isLoading = false;
       });
     }
-    fetch();
-
     timelineService = TimelineService(tripId: widget.tripId!);
     timelineService!.loadTimeline().then((_) {
       setState(() {});
@@ -316,24 +193,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     scrollDirection: Axis.horizontal,
                     children: [
                       CardSet(
-                        openFlightDialog: () {
-                          openFlightDialog(context);
-                        },
-                        openHotelDialog: () {
-                          openHotelDialog(context);
-                        },
-                        openFoodDialog: (context, {TimelineEvent? event}) {
-                          openFoodDialog(context, event: event);
-                        },
-                        openActivitiesDialog:
-                            (context, {TimelineEvent? event}) {
-                              openActivitiesDialog(context, event: event);
-                            },
+                        refreshScreen: refreshCardSet,
+                        timelineService: timelineService,
                         tripId: widget.tripId,
-                        activityDetails: activityDetails,
-                        foodDetails: foodDetails,
-                        flightDetails: flightDetails,
-                        hotelDetails: hotelDetails,
                       ),
                       Padding(
                         padding: const EdgeInsets.only(top: 50.0),
@@ -363,7 +225,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    height: 90,
+                    height: 70,
                     child: ClipRect(
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
@@ -385,7 +247,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
           //--------------------------------------------------------------------LOGO appbar
           const Center(
             child: Padding(
-              padding: EdgeInsets.only(top: 35.0, left: 20),
+              padding: EdgeInsets.only(top: 25.0, left: 20),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
@@ -404,7 +266,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
-              padding: const EdgeInsets.only(top: 25, left: 20, right: 20),
+              padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
               child: Row(
                 children: [
                   IconButton(

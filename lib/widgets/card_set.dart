@@ -6,27 +6,14 @@ import 'package:plan_it/widgets/cards/detailed_card.dart';
 import 'package:plan_it/widgets/cards/hotel_card.dart';
 
 class CardSet extends StatefulWidget {
-  VoidCallback? openFlightDialog;
-  VoidCallback? openHotelDialog;
-  final void Function(BuildContext, {TimelineEvent? event})?
-  openActivitiesDialog;
-  final void Function(BuildContext, {TimelineEvent? event})? openFoodDialog;
+  VoidCallback? refreshScreen;
   final String? tripId;
-  final List<Activity> activityDetails;
-  final List<Food> foodDetails;
-  final Flight? flightDetails;
-  final Hotel? hotelDetails;
+  final TimelineService? timelineService;
 
   CardSet({
-    required this.openFlightDialog,
-    required this.openHotelDialog,
-    required this.openActivitiesDialog,
-    required this.openFoodDialog,
+    required this.refreshScreen,
     required this.tripId,
-    required this.activityDetails,
-    required this.foodDetails,
-    required this.flightDetails,
-    required this.hotelDetails,
+    required this.timelineService,
   });
 
   @override
@@ -34,6 +21,156 @@ class CardSet extends StatefulWidget {
 }
 
 class _CardSetState extends State<CardSet> {
+  List<Food> foodDetails = [];
+  List<Activity> activityDetails = [];
+  Hotel? hotelDetails;
+  Flight? flightDetails;
+
+  //------------------------------------------------------------------------------FETCH DETAILS
+  Future<void> fetchFoodDetails() async {
+    final newFood = await Trip.fetchFoodDetails(widget.tripId!);
+    setState(() {
+      foodDetails = newFood;
+    });
+  }
+
+  Future<void> fetchActivityDetails() async {
+    final List<Activity> newActivity = await Trip.fetchActivityDetails(
+      widget.tripId!,
+    );
+    setState(() {
+      activityDetails = newActivity;
+    });
+  }
+
+  Future<void> fetchHotelDetails() async {
+    final newHotel = await Trip.fetchHotelDetails(widget.tripId!);
+    setState(() {
+      hotelDetails = newHotel;
+    });
+  }
+
+  Future<void> fetchFlightDetails() async {
+    final newFlight = await Trip.fetchFlightDetails(widget.tripId!);
+    setState(() {
+      flightDetails = newFlight;
+    });
+  }
+
+  //------------------------------------------------------------------------------OPEN DIALOG
+  void openFoodDialog(BuildContext context, {TimelineEvent? event}) {
+    if (widget.tripId == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return SaveUpdateFood(
+          existingEvent:
+              event, // qui passi l’event se c’è, altrimenti null per nuova attività
+          tripDocId: widget.tripId!,
+          onDataSaved: () async {
+            // if (widget.fetchTripDetails != null) {
+            //    widget.fetchTripDetails!();
+            // }
+            // ;
+            widget.refreshScreen?.call();
+            await fetchFoodDetails();
+            widget.timelineService!.loadTimeline().then((_) {
+              setState(() {});
+            });
+            if (!mounted) return;
+            setState(() {});
+          },
+        );
+      },
+    );
+  }
+
+  void openActivitiesDialog(BuildContext context, {TimelineEvent? event}) {
+    if (widget.tripId == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return SaveUpdateActivity(
+          existingEvent:
+              event, // qui passi l’event se c’è, altrimenti null per nuova attività
+          tripDocId: widget.tripId!,
+          onDataSaved: () async {
+            widget.refreshScreen?.call();
+            await fetchActivityDetails();
+            widget.timelineService!.loadTimeline().then((_) {
+              setState(() {});
+            });
+            if (!mounted) return;
+            setState(() {});
+          },
+        );
+      },
+    );
+  }
+
+  void openHotelDialog(BuildContext context) {
+    if (widget.tripId == null) {
+      print("Errore: tripId è nullo, non posso aprire il dialogo.");
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return SaveUpdateHotel(
+          tripDocId: widget.tripId!,
+          onDataSaved: () async {
+            widget.refreshScreen?.call();
+            await fetchHotelDetails();
+            widget.timelineService!.loadTimeline().then((_) {
+              setState(() {});
+            });
+            if (!mounted) return; // ← controlla se il widget è ancora nel tree
+            setState(() {});
+          },
+        );
+      },
+    );
+  }
+
+  void openFlightDialog(BuildContext context) {
+    if (widget.tripId == null) {
+      print("Errore: tripId è nullo, non posso aprire il dialogo.");
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return SaveUpdateFlights(
+          tripDocId: widget.tripId!,
+          //----------------------------------------------------------Chiamerà _fetchTripDetails dopo il salvataggio
+          onDataSaved: () async {
+            widget.refreshScreen?.call();
+            await fetchFlightDetails(); // <-- aggiungi questo
+            widget.timelineService!.loadTimeline().then((_) {
+              setState(() {});
+            });
+            if (!mounted) return; // ← controlla se il widget è ancora nel tree
+            setState(() {});
+          },
+        );
+      },
+    );
+  }
+
+  //------------------------------------------------------------------------------INIT E BUILD
+  @override
+  void initState() {
+    super.initState();
+    fetchFoodDetails();
+    fetchActivityDetails();
+    fetchHotelDetails();
+    fetchFlightDetails();
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -49,14 +186,14 @@ class _CardSetState extends State<CardSet> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      widget.openFlightDialog?.call();
+                      openFlightDialog(context);
                     },
                     child:
-                        (widget.flightDetails != null &&
-                            widget.flightDetails!.outboundDateTime != null &&
-                            widget.flightDetails!.returnDateTime != null)
+                        (flightDetails != null &&
+                            flightDetails!.outboundDateTime != null &&
+                            flightDetails!.returnDateTime != null)
                         ? FlightCard(
-                            flightDetails: widget.flightDetails,
+                            flightDetails: flightDetails,
                             imageAsset: 'assets/images/cards/aereo.png',
                             title: 'Flights',
                           )
@@ -68,17 +205,17 @@ class _CardSetState extends State<CardSet> {
                   GestureDetector(
                     onTap: () {
                       setState(() {
-                        widget.openHotelDialog?.call();
+                        openHotelDialog(context);
                       });
                     },
                     child:
-                        widget.hotelDetails != null &&
-                            widget.hotelDetails!.checkIn != null &&
-                            widget.hotelDetails!.checkOut != null
+                        hotelDetails != null &&
+                            hotelDetails!.checkIn != null &&
+                            hotelDetails!.checkOut != null
                         ? HotelCard(
                             imageAsset: 'assets/images/cards/letto.png',
                             title: 'Hotel',
-                            hotelDetails: widget.hotelDetails,
+                            hotelDetails: hotelDetails,
                           )
                         : DetailsCard(
                             imageAsset: 'assets/images/cards/letto.png',
@@ -90,27 +227,24 @@ class _CardSetState extends State<CardSet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  widget.activityDetails.isNotEmpty
+                  activityDetails.isNotEmpty
                       ? ActivityCard(
-                          activityDetails: widget.activityDetails,
+                          activityDetails: activityDetails,
                           tripId: widget.tripId,
                           imageAsset: 'assets/images/cards/omino.png',
                           title: 'Activities',
                           onAdd: () {
-                            widget.openActivitiesDialog?.call(
+                            openActivitiesDialog(
                               context,
                             ); // aggiungi nuova attività
                           },
                           onTap: (TimelineEvent event) {
-                            widget.openActivitiesDialog?.call(
-                              context,
-                              event: event,
-                            );
+                            openActivitiesDialog(context, event: event);
                           },
                         )
                       : GestureDetector(
                           onTap: () {
-                            widget.openActivitiesDialog?.call(context);
+                            openActivitiesDialog(context);
                           },
                           child: DetailsCard(
                             imageAsset: 'assets/images/cards/omino.png',
@@ -118,22 +252,22 @@ class _CardSetState extends State<CardSet> {
                             title: 'Activities',
                           ),
                         ),
-                  widget.foodDetails.isNotEmpty
+                  foodDetails.isNotEmpty
                       ? FoodCard(
-                          foodDetails: widget.foodDetails,
+                          foodDetails: foodDetails,
                           tripId: widget.tripId,
                           imageAsset: 'assets/images/cards/food.png',
                           title: 'Food',
                           onAdd: () {
-                            widget.openFoodDialog?.call(context);
+                            openFoodDialog(context);
                           },
                           onTap: (TimelineEvent event) {
-                            widget.openFoodDialog?.call(context, event: event);
+                            openFoodDialog(context, event: event);
                           },
                         )
                       : GestureDetector(
                           onTap: () {
-                            widget.openFoodDialog?.call(context);
+                            openFoodDialog(context);
                           },
                           child: DetailsCard(
                             imageAsset: 'assets/images/cards/food.png',

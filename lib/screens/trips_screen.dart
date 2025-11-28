@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:plan_it/resource/exports.dart';
+import 'package:plan_it/services/trip_list_screen.dart';
 
 class CreationScreen extends StatefulWidget {
   static const id = 'creation_page';
@@ -13,7 +13,6 @@ class _CreationScreenState extends State<CreationScreen> {
   List<DateTime> dates = [];
   String? _currentUserId;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final _tripListKey = GlobalKey<_TripListScreenState>();
   //------------------------------------------------------------------------------dialog crea/modifica
   void openTripDialog(BuildContext context) {
     showDialog(
@@ -22,7 +21,6 @@ class _CreationScreenState extends State<CreationScreen> {
       builder: (context) {
         return saveUpdateTripDialog(
           onTripSavedAndRefresh: () {
-            _tripListKey.currentState?.refreshTrips();
             return Future.value(true);
           },
           dates: dates,
@@ -98,6 +96,7 @@ class _CreationScreenState extends State<CreationScreen> {
           Align(
             alignment: Alignment.topCenter,
             child: Stack(
+              //-----------------------------------------------------APPBAR
               children: [
                 Material(
                   elevation: 3,
@@ -106,7 +105,7 @@ class _CreationScreenState extends State<CreationScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    height: 90,
+                    height: 70,
                     child: ClipRect(
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
@@ -124,10 +123,10 @@ class _CreationScreenState extends State<CreationScreen> {
                 ),
               ],
             ),
-          ),
+          ), //------------------------------------------------------------------LOGO
           Center(
             child: Padding(
-              padding: EdgeInsets.only(top: 35.0, left: 20),
+              padding: EdgeInsets.only(top: 25.0, left: 20),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
@@ -150,101 +149,10 @@ class _CreationScreenState extends State<CreationScreen> {
                       color: const Color(0xFFF5AD2B),
                     ),
                   )
-                : TripListScreen(key: _tripListKey, userId: _currentUserId!),
+                : TripListScreen(userId: _currentUserId!),
           ),
         ],
       ),
     );
   }
-}
-
-class TripListScreen extends StatefulWidget {
-  final String userId;
-
-  TripListScreen({required this.userId, super.key});
-
-  @override
-  State<TripListScreen> createState() => _TripListScreenState();
-}
-
-class _TripListScreenState extends State<TripListScreen> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  List<Trip> trips = [];
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTrips();
-  }
-
-  Future<void> _loadTrips() async {
-    setState(() => isLoading = true);
-
-    try {
-      final snapshot = await _firestore
-          .collection('trips')
-          .where('userId', isEqualTo: widget.userId)
-          .orderBy('createdAt', descending: true)
-          .get();
-
-      final mappedTrips = await compute(_mapDocsToTrips, snapshot.docs);
-
-      if (!mounted) return;
-
-      setState(() {
-        trips = mappedTrips;
-        isLoading = false;
-      });
-    } catch (e) {
-      print('Errore caricamento viaggi: $e');
-      if (mounted) setState(() => isLoading = false);
-    }
-  }
-
-  Future<void> refreshTrips() async {
-    await _loadTrips();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (isLoading) {
-      return Center(child: CircularProgressIndicator(color: Colors.white));
-    }
-
-    if (trips.isEmpty) {
-      return Center(
-        child: Text(
-          'Start to plan your next trip!',
-          style: TextStyle(color: Colors.white70, fontSize: 22),
-        ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: refreshTrips, // chiama la funzione per ricaricare i dati
-      color: Colors.white, // colore dell’indicatore
-      backgroundColor: Colors.blueGrey, // sfondo dell’indicatore
-      child: ListView.builder(
-        physics:
-            const AlwaysScrollableScrollPhysics(), // necessario per RefreshIndicator
-        itemCount: trips.length,
-        itemBuilder: (context, index) {
-          final trip = trips[index];
-          return TripCard(
-            trip: trip,
-            onUpdated: refreshTrips,
-            currentUserId: widget.userId,
-          );
-        },
-      ),
-    );
-  }
-}
-
-List<Trip> _mapDocsToTrips(List<QueryDocumentSnapshot> docs) {
-  return docs.map((doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return Trip.fromFirestore(data, doc.id);
-  }).toList();
 }

@@ -30,27 +30,24 @@ class _FoodCardState extends State<FoodCard> {
   String restLocation = '';
   List<TimelineEvent> events = [];
 
-  @override
-  void initState() {
-    super.initState();
-
-    loadEvents();
-    print(loadEvents());
-  }
-
   Future<void> loadEvents() async {
-    print('questi sono i food details:${widget.foodDetails}');
     final list = widget.foodDetails ?? [];
     setState(() {
       events = TimelineEventMapper.fromFood(list);
     });
-    print('questi sono gli eventi:$events');
   }
 
   String formatDateTime(DateTime dateTime) {
     final String data = DateFormat('dd-MM-yyyy').format(dateTime);
     final String ora = DateFormat('HH:mm').format(dateTime);
     return 'date: $data \n time:$ora';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadEvents();
   }
 
   @override

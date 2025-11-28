@@ -130,7 +130,7 @@ class _saveUpdateTripDialogState extends State<saveUpdateTripDialog> {
             Navigator.pop(context);
           },
           child: Container(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withOpacity(0.5),
             width: double.infinity,
             height: double.infinity,
           ),
