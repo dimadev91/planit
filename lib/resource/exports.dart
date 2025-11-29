@@ -38,7 +38,7 @@ export 'package:plan_it/services/timeline_service.dart';
 export 'package:plan_it/theme/constants.dart';
 export 'package:plan_it/theme/theme.dart';
 export 'package:plan_it/widgets/button.dart';
-export 'package:plan_it/widgets/cards/flight_card.dart';
+export 'package:plan_it/widgets/cards/flights_card/flight_card.dart';
 export 'package:plan_it/widgets/cards/food_card.dart';
 export 'package:plan_it/widgets/cards/trip_card.dart';
 export 'package:plan_it/widgets/map_dialog.dart';

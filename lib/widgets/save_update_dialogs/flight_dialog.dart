@@ -32,6 +32,7 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
   final TextEditingController returnDetailsController = TextEditingController();
   final TextEditingController budgetOutbound = TextEditingController();
   final TextEditingController budgetReturn = TextEditingController();
+  //creo oggetto airport, lo inizializzo nell'initstate, così posso utilizzare i suoi metodi
   late Airport airport;
 
   //---------------------------------------------------------------------formattazione data e orario
@@ -91,10 +92,6 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
       print("Errore: aeroporto non trovato.");
       return;
     }
-
-    print('numero 1${departureAirport.iataCode}');
-    print('numero 2${returnAirport.iataCode}');
-
     // 1. Crea l'oggetto Flight e assegnamo alle proprietà i valori
     final flight = Flight(
       outboundDateTime: outboundDateTime,
@@ -128,21 +125,19 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
 
     // 3. Aggiorna il documento Trip in Firestore
     try {
-      await FirebaseFirestore.instance
-          .collection('trips')
-          .doc(widget.tripDocId) // Usa l'ID del viaggio ricevuto
-          .update({
-            'flight': flightMap, // Salva la Mappa 'flight' nel documento Trip
-          });
-      print("✅ Dettagli Volo salvati/aggiornati con successo.");
+      await FirebaseFirestore.instance.collection('trips').doc(widget.tripDocId).set(
+        {
+          // 💡 CORREZIONE: Usiamo 'destinations.flights' per nidificare i voli
+          'destinations.flights': flightMap,
+        },
+        SetOptions(
+          merge:
+              true, // Mantiene tutti gli altri campi del documento e crea il campo 'destinations' se non esiste.
+        ),
+      );
+      print("Dettagli Volo salvati/aggiornati con successo.");
 
-      // ✅ CHIAMATA DI CALLBACK: Chiamiamo il refresh della schermata padre
-      if (widget.onDataSaved != null) {
-        widget.onDataSaved!();
-      }
-
-      // Chiudi la finestra dopo il salvataggio
-      Navigator.pop(context);
+      // ... (omesso codice callback e Navigator.pop)
     } catch (e) {
       print("!!! Errore durante il salvataggio dei dettagli volo: $e");
     }
@@ -154,7 +149,7 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
     // Avvia il fetch dei dati del volo non appena il Dialog si apre
     _loadFlight();
     airport = Airport();
-    airport.loadAirportsData().then((_) => _loadFlight());
+    airport.loadAirportsData();
   }
 
   // Pulizia delle risorse

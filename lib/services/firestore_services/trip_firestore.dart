@@ -1,6 +1,7 @@
 // File: trip_firestore.dart
 import 'package:plan_it/resource/exports.dart';
 import 'package:plan_it/services/firestore_services/activity_firestore.dart';
+import 'package:plan_it/services/firestore_services/destination_firestore.dart';
 
 class Trip {
   final String title;
@@ -107,6 +108,37 @@ class Trip {
     } catch (e) {
       print("Error fetching the trip: $e");
       return null;
+    }
+  }
+
+  //---------------------------------Fetch Destination
+  static Future<List<Destination>> fetchDestinationDetails(
+    String tripDocId,
+  ) async {
+    try {
+      // SNAPSHOT (risultato della query)
+
+      final destinationData = await FirebaseFirestore.instance
+          .collection('trips')
+          .doc(tripDocId)
+          .collection('destination') // Naviga alla subcollezione
+          .get(); // crea lo snapshot
+
+      // destinationData.docs è l'elenco dei documenti trovati.
+      return destinationData.docs
+          .map(
+            //itera su tutti i documenti e li mappa in un nuovo oggetto
+            (doc) =>
+                // Per ogni documento:
+                Destination.fromMap(
+                  doc.data(), // Primo parametro: i dati
+                  doc.id, // Secondo parametro: l'ID del documento
+                ),
+          )
+          .toList();
+    } catch (e) {
+      print("Error fetching destinations from subcollection: $e");
+      return [];
     }
   }
 

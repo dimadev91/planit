@@ -49,13 +49,16 @@ class EmptyFlightCard extends StatelessWidget {
                   ),
                   Flexible(
                     //----------------------------------------immagine
-                    child: Container(
-                      height: 100,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage(imageAsset),
-                          fit: BoxFit.fitHeight,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Container(
+                        height: 100,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage(imageAsset),
+                            fit: BoxFit.fitHeight,
+                          ),
                         ),
                       ),
                     ),

@@ -1,12 +1,16 @@
 import 'package:plan_it/resource/exports.dart';
 import 'package:plan_it/services/firestore_services/activity_firestore.dart';
+import 'package:plan_it/services/firestore_services/destination_firestore.dart';
 import 'package:plan_it/services/timeline_event_class.dart';
 import 'package:plan_it/widgets/cards/activity_card.dart';
+import 'package:plan_it/widgets/cards/destination_card.dart';
 import 'package:plan_it/widgets/cards/detailed_card.dart';
-import 'package:plan_it/widgets/cards/empty_flight_card.dart';
+import 'package:plan_it/widgets/cards/empty_destination_card.dart';
 import 'package:plan_it/widgets/cards/empty_hotel_card.dart';
+import 'package:plan_it/widgets/cards/flights_card/empty_flight_card.dart';
+import 'package:plan_it/widgets/cards/flights_card/sample_flight_card.dart';
 import 'package:plan_it/widgets/cards/hotel_card.dart';
-import 'package:plan_it/widgets/cards/sample_flight_card.dart';
+import 'package:plan_it/widgets/save_update_dialogs/destination_dialog.dart';
 
 class CardSet extends StatefulWidget {
   VoidCallback? refreshScreen;
@@ -31,6 +35,8 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
   List<Activity> activityDetails = [];
   Hotel? hotelDetails;
   Flight? flightDetails;
+  Destination? destinationDetails;
+  List<Destination> destinationDetailsList = [];
 
   //------------------------------------------------------------------------------FETCH DETAILS
   Future<void> fetchFoodDetails() async {
@@ -63,7 +69,32 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
     });
   }
 
+  Future<void> fetchDestinationDetails() async {
+    final newDestination = await Trip.fetchDestinationDetails(widget.tripId!);
+    setState(() {
+      print('Destination Details: $newDestination');
+      destinationDetailsList = newDestination;
+    });
+  }
+
   //------------------------------------------------------------------------------OPEN DIALOG
+  void openDestinationDialog(BuildContext context) {
+    if (widget.tripId == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return DestinationDialog(
+          tripDocId: widget.tripId!,
+          onDataSaved: () async {
+            widget.refreshScreen?.call();
+            await fetchDestinationDetails();
+          },
+        );
+      },
+    );
+  }
+
   void openFoodDialog(BuildContext context, {TimelineEvent? event}) {
     if (widget.tripId == null) return;
 
@@ -153,8 +184,8 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
         return SaveUpdateFlights(
           tripDocId: widget.tripId!,
           onDataSaved: () async {
+            await fetchFlightDetails();
             widget.refreshScreen?.call();
-            await fetchFlightDetails(); // <-- aggiungi questo
             widget.timelineService!.loadTimeline().then((_) {
               setState(() {});
             });
@@ -174,6 +205,7 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
     fetchActivityDetails();
     fetchHotelDetails();
     fetchFlightDetails();
+    fetchDestinationDetails();
   }
 
   @override
@@ -184,6 +216,24 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
         Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
+            GestureDetector(
+              onTap: () {
+                openDestinationDialog(context);
+              },
+              child: destinationDetailsList.isNotEmpty
+                  // destinationDetails != null &&
+                  //     destinationDetails!.cityName != null &&
+                  //     destinationDetails!.countryName != null
+                  ? DestinationCard(
+                      destinationDetails: destinationDetails,
+                      destinations: destinationDetailsList,
+                      title: 'Destination',
+                    )
+                  : EmptyDestinationCard(
+                      imageAsset: 'assets/images/cards/destinazione.png',
+                      title: 'Destination',
+                    ),
+            ),
             GestureDetector(
               onTap: () {
                 openFlightDialog(context);

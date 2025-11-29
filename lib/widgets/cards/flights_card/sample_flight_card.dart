@@ -79,6 +79,28 @@ class _SampleFlightCardState extends State<SampleFlightCard> {
     }
   }
 
+  //serve per aggiornare i dati in caso di modifica di ciò che è specificato
+  @override
+  void didUpdateWidget(covariant SampleFlightCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.flightDetails != oldWidget.flightDetails) {
+      final flight = widget.flightDetails;
+      if (flight == null) return;
+      setState(() {
+        outDate = flight.outboundDateTime;
+        inDate = flight.returnDateTime;
+        outDetail = flight.outboundDetails;
+        inDetail = flight.returnDetails;
+        outIata = flight.departureIata;
+        inIata = flight.returnIata;
+        outCity = flight.departureCity;
+        inCity = flight.returnCity;
+        outAirport = flight.departureAirport;
+        inAirport = flight.returnAirport;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -159,10 +181,7 @@ class _SampleFlightCardState extends State<SampleFlightCard> {
                             ),
                           ),
                           SizedBox(width: 5),
-                          Transform.rotate(
-                            angle: 90 * (pi / 180),
-                            child: Icon(Icons.flight, size: 40),
-                          ),
+                          Icon(Icons.airplanemode_on_sharp, size: 40),
                           SizedBox(width: 5),
                           Text(
                             inIata ?? '',

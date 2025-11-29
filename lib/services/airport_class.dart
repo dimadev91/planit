@@ -60,15 +60,17 @@ class Airport {
   }
 
   Airport? getAirportByName(String name) {
-    loadAirportsData();
-    print(airportsFiltered);
+    // loadAirportsData();
     print('sono arivato');
     final query = name.toLowerCase();
+    final IATA = name.toUpperCase();
     try {
       print('$name');
       return airportsFiltered!.firstWhere((airport) {
         final airportName = airport.name?.toLowerCase() ?? '';
-        return airportName.contains(query) || query.contains(airportName);
+        return airportName.contains(query) ||
+            query.contains(airportName) ||
+            airport.iataCode == IATA;
       });
     } catch (_) {
       print('errore');

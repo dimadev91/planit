@@ -1,16 +1,16 @@
 import 'package:plan_it/resource/exports.dart';
 
 class MapDialog extends StatefulWidget {
-  String? activityLocation;
-  String? activityTitle;
+  String? location;
+  String? title;
   Map<String, dynamic>? searchedLocation;
-  final TextEditingController? activityLocationController;
+  final TextEditingController? locationController;
 
   MapDialog({
-    required this.activityLocation,
-    required this.activityTitle,
+    required this.location,
+    required this.title,
     required this.searchedLocation,
-    required this.activityLocationController,
+    required this.locationController,
   });
 
   @override
@@ -37,7 +37,7 @@ class _MapDialogState extends State<MapDialog> {
   Future<void> searchLocation(
     String query,
     BuildContext context, {
-    String? activityName,
+    String? cityName,
   }) async {
     if (query.isEmpty) return;
 
@@ -62,22 +62,24 @@ class _MapDialogState extends State<MapDialog> {
           ? _formattaPlacemark(placemarks.first)
           : query;
 
-      // se si include anche il nome dell’attività
-      if (activityName != null && activityName.isNotEmpty) {
-        formattedAddress = '$activityName, $formattedAddress';
+      // se si include anche il nome
+      if (cityName != null && cityName.isNotEmpty) {
+        formattedAddress = '$cityName, $formattedAddress';
       }
 
       // aggiorno la mappa
       mapPickerController.move(LatLng(loc.latitude, loc.longitude), 16);
 
       // salvo per il bottone
+      final place = placemarks.isNotEmpty ? placemarks.first : null;
       widget.searchedLocation = {
         'lat': loc.latitude,
         'lon': loc.longitude,
-        'adress': formattedAddress,
+        'city': place?.locality ?? '',
+        'country': place?.country ?? '',
       };
-      widget.activityLocation = formattedAddress;
-      widget.activityTitle = query;
+      widget.location = formattedAddress;
+      widget.title = query;
       setState(() {}); // aggiorna la UI del dialog
     } catch (e) {
       if (context.mounted) {
@@ -209,7 +211,7 @@ class _MapDialogState extends State<MapDialog> {
                         ),
                       ),
                     ),
-                    Container(width: 2, height: 45, color: Colors.white),
+                    Container(width: 1, height: 45, color: Colors.white),
                     Expanded(
                       //------------------------------------------- bottone chiusura
                       child: GestureDetector(
@@ -218,8 +220,7 @@ class _MapDialogState extends State<MapDialog> {
                           final locToUse =
                               widget.searchedLocation ??
                               {
-                                'adress':
-                                    widget.activityLocationController!.text,
+                                'adress': widget.locationController!.text,
                               }; // Fallback se non è stata fatta ricerca
 
                           Navigator.pop(

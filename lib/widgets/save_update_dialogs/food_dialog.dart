@@ -16,28 +16,27 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
   List<Food>? foodDetails;
   DateTime? restTime;
   String? restTitle;
-  String? activityLocation;
+  String? restLocation;
   Map<String, dynamic>? searchedLocation;
   String? restRangePrice;
 
-  final TextEditingController activityTitleController = TextEditingController();
-  final TextEditingController activityLocationController =
-      TextEditingController();
+  final TextEditingController restNameController = TextEditingController();
+  final TextEditingController restLocationController = TextEditingController();
   final TextEditingController priceController = TextEditingController();
   //-----------------------------------------------------------------------load dati se ci sono aggiorna ui
-  Future<void> _loadActivity() async {
+  Future<void> _loadFood() async {
     if (widget.existingEvent != null) {
       // inizializza dai dati dell'evento esistente
       final e = widget.existingEvent!;
       restTime = e.datetime;
-      activityTitleController.text = e.title;
-      activityLocationController.text = e.description ?? '';
+      restNameController.text = e.title;
+      restLocationController.text = e.description ?? '';
       priceController.text = e.price?.toString() ?? '';
     } else {
       // nuovo evento: resetta tutto
       restTime = null;
-      activityTitleController.clear();
-      activityLocationController.clear();
+      restNameController.clear();
+      restLocationController.clear();
       priceController.clear();
       searchedLocation = null;
     }
@@ -46,20 +45,20 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
   }
 
   //---------------------------------------------------------------------------funzione aggiorna crea
-  Future<void> _saveActivityDetails() async {
+  Future<void> _saveFoodDetails() async {
     // Fallback per la location
     String finalLocation =
         (searchedLocation != null &&
             (searchedLocation!['adress']?.isNotEmpty ?? false))
         ? searchedLocation!['adress']
-        : activityLocationController.text;
+        : restLocationController.text;
 
-    // Creo l'oggetto Activity
+    // Creo l'oggetto Food
     final newFood = Food(
       restTime: restTime,
-      restName: activityTitleController.text.trim().isEmpty
+      restName: restNameController.text.trim().isEmpty
           ? null
-          : activityTitleController.text,
+          : restNameController.text,
       restLocation: finalLocation.trim().isEmpty ? null : finalLocation,
       restPriceRange: priceController.text.trim().isEmpty
           ? null
@@ -67,9 +66,9 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
     );
 
     // Trasforma in mappa, convertendo restTime in Timestamp
-    final activityMap = newFood.toMap();
-    if (activityMap['restTime'] is DateTime) {
-      activityMap['restTime'] = Timestamp.fromDate(activityMap['restTime']);
+    final foodMap = newFood.toMap();
+    if (foodMap['restTime'] is DateTime) {
+      foodMap['restTime'] = Timestamp.fromDate(foodMap['restTime']);
     }
 
     try {
@@ -104,12 +103,12 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
             });
 
             if (index != -1) {
-              existingFood[index] = activityMap;
+              existingFood[index] = foodMap;
             } else {
-              existingFood.add(activityMap);
+              existingFood.add(foodMap);
             }
           } else {
-            existingFood.add(activityMap);
+            existingFood.add(foodMap);
           }
 
           await tripRef.update({'food': existingFood});
@@ -117,10 +116,10 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
         }
       } else {
         await FirebaseFirestore.instance.collection('trips').add({
-          'food': [activityMap],
+          'food': [foodMap],
           'createdAt': FieldValue.serverTimestamp(),
         });
-        print("✅ New food created with activity.");
+        print("✅ New food created with food.");
       }
 
       if (widget.onDataSaved != null) widget.onDataSaved!();
@@ -132,7 +131,7 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
   }
 
   // ---------------------------------------------------------------------------funzione elimina
-  Future<void> _deleteActivity() async {
+  Future<void> _deleteFood() async {
     if (widget.tripDocId == null || widget.existingEvent == null) return;
 
     try {
@@ -142,10 +141,10 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
       final doc = await tripRef.get();
 
       if (doc.exists) {
-        List existingActivities = List.from(doc['activities'] ?? []);
+        List existingFood = List.from(doc['food'] ?? []);
 
         // Confronta usando Timestamp invece di stringa
-        existingActivities.removeWhere((a) {
+        existingFood.removeWhere((a) {
           final aTime = a['restTime'];
           if (aTime is Timestamp) {
             return aTime.toDate() == widget.existingEvent!.datetime &&
@@ -157,7 +156,7 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
           return false;
         });
 
-        await tripRef.update({'food': existingActivities});
+        await tripRef.update({'food': existingFood});
       }
 
       if (widget.onDataSaved != null) widget.onDataSaved!();
@@ -171,20 +170,21 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
 
   //----------------------------------------------------------------------------MAPPA
   void openMapDialog() async {
+    //assegnamo un risultato corrispondente al valore della mappa e poi elaboriamo i dati
     final Map<String, dynamic>? result =
         await showDialog<Map<String, dynamic>?>(
           context: context,
           builder: (context) {
             return MapDialog(
               // Passiamo solo i dati attuali al dialogo
-              activityLocation: activityLocationController.text.isEmpty
+              location: restLocationController.text.isEmpty
                   ? null
-                  : activityLocationController.text,
-              activityTitle: activityTitleController.text.isEmpty
+                  : restLocationController.text,
+              title: restNameController.text.isEmpty
                   ? null
-                  : activityTitleController.text,
+                  : restNameController.text,
               searchedLocation: searchedLocation,
-              activityLocationController: activityLocationController,
+              locationController: restLocationController,
             );
           },
         );
@@ -194,29 +194,21 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
       setState(() {
         searchedLocation = result;
         // Aggiorna il controller di testo locale per aggiornare la UI
-        activityLocationController.text = result['adress'];
-        activityLocation =
+        restLocationController.text = result['adress'];
+        restLocation =
             result['adress']; // Aggiorna anche la variabile di stato per coerenza
       });
     }
   }
 
   @override
-  @override
   void initState() {
     super.initState();
-    _loadActivity();
+    _loadFood();
   }
 
   @override
   Widget build(BuildContext context) {
-    // // Mostra il caricamento mentre il Dialog fa il fetch
-    // if (_isLoading) {
-    //   return const Center(
-    //     child: CircularProgressIndicator(color: Colors.white),
-    //   );
-    // }
-
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Stack(
@@ -287,7 +279,7 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
                                             color: Colors.white,
                                             fontSize: 18,
                                           ),
-                                          controller: activityTitleController,
+                                          controller: restNameController,
                                           decoration: kTextFieldAdd.copyWith(
                                             hintText: 'Where you want to eat?',
 
@@ -328,12 +320,9 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
                                           height: 30,
                                           width: 160,
                                           child: Text(
-                                            activityLocationController
-                                                    .text
-                                                    .isEmpty
+                                            restLocationController.text.isEmpty
                                                 ? 'Location'
-                                                : activityLocationController
-                                                      .text,
+                                                : restLocationController.text,
                                             style: kDialogTextStyle,
                                           ),
                                         ),
@@ -472,7 +461,7 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
                                   children: [
                                     GestureDetector(
                                       onTap: () async {
-                                        await _deleteActivity();
+                                        await _deleteFood();
                                       },
                                       child: Container(
                                         decoration: const BoxDecoration(
@@ -501,9 +490,9 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
                                     ),
                                     GestureDetector(
                                       onTap: () async {
-                                        await _saveActivityDetails();
+                                        await _saveFoodDetails();
                                         if (!mounted) return;
-                                        _loadActivity();
+                                        _loadFood();
                                       },
                                       child: Container(
                                         decoration: const BoxDecoration(
@@ -530,7 +519,7 @@ class _SaveUpdateFoodState extends State<SaveUpdateFood> {
                               : GestureDetector(
                                   //-----------------------------senza delete
                                   onTap: () async {
-                                    await _saveActivityDetails();
+                                    await _saveFoodDetails();
                                   },
                                   child: Container(
                                     decoration: const BoxDecoration(

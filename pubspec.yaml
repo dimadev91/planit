@@ -102,6 +102,10 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
+    - family: MyIcons
+      fonts:
+        - asset: assets/fonts/andata_ritorno.ttf
+
     - family: Audiowide
       fonts:
         - asset: fonts/Audiowide-Regular.ttf

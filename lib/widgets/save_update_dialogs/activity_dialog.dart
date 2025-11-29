@@ -180,14 +180,14 @@ class _SaveUpdateActivityState extends State<SaveUpdateActivity> {
           builder: (context) {
             return MapDialog(
               // Passiamo solo i dati attuali al dialogo
-              activityLocation: activityLocationController.text.isEmpty
+              location: activityLocationController.text.isEmpty
                   ? null
                   : activityLocationController.text,
-              activityTitle: activityTitleController.text.isEmpty
+              title: activityTitleController.text.isEmpty
                   ? null
                   : activityTitleController.text,
               searchedLocation: searchedLocation,
-              activityLocationController: activityLocationController,
+              locationController: activityLocationController,
             );
           },
         );

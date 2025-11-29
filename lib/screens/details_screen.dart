@@ -141,7 +141,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 children: [
                   //-----------------------------------------------------------TITOlO VIAGGIO
                   Padding(
-                    padding: const EdgeInsets.only(top: 30),
+                    padding: const EdgeInsets.only(top: 35),
                     child: Column(
                       children: [
                         Text(
@@ -156,6 +156,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                           ),
                         ),
                         //------------------------------------------------------------DATE
+                        SizedBox(height: 10),
                         Container(
                           height: 40,
                           width: 180,
@@ -185,7 +186,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
               //--------------------------------------------------------------------BOTTOMSHEET fisso
               Container(height: 30),
               Container(
-                height: MediaQuery.sizeOf(context).height / 1.6,
+                height: MediaQuery.sizeOf(context).height / 1.5,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   color: kColorCard,

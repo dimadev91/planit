@@ -35,10 +35,10 @@ class TimelineEventMapper {
             datetime: a.activityTime!,
             title: a.activityName!,
             icon: Icons.directions_run_outlined,
-            description: a.activityLocation,
+            description: a.location,
             price: a.activityPrice,
             duration: a.activityDuration?.toString(),
-            location: a.activityLocation,
+            location: a.location,
           ),
         )
         .toList()

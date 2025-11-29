@@ -27,7 +27,7 @@ class _TripListScreenState extends State<TripListScreen> {
             return Future.value(true);
           },
           dates: dates,
-          currentUserId: widget.currentUserId!,
+          currentUserId: widget.currentUserId,
           tripSelected: null,
         );
       },

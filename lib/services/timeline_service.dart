@@ -29,9 +29,9 @@ class TimelineService {
             timelining.add(
               TimelineEvent(
                 datetime: flights.outboundDateTime!,
-                title: 'Outbound',
+                title: flights.departureAirport ?? '',
                 icon: Icons.flight_takeoff,
-                location: '',
+                location: flights.departureCity ?? '',
               ),
             );
           }
@@ -39,9 +39,9 @@ class TimelineService {
             timelining.add(
               TimelineEvent(
                 datetime: flights.returnDateTime!,
-                title: 'Return',
+                title: flights.returnAirport ?? '',
                 icon: Icons.flight_land,
-                location: '',
+                location: flights.returnCity ?? '',
               ),
             );
           }
