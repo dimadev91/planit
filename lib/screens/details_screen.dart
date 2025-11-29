@@ -1,5 +1,5 @@
 import 'package:plan_it/resource/exports.dart';
-import 'package:plan_it/widgets/card_set.dart';
+import 'package:plan_it/widgets/cards/card_set.dart';
 import 'package:plan_it/widgets/timeline.dart';
 
 class DetailsScreen extends StatefulWidget {
@@ -151,17 +151,30 @@ class _DetailsScreenState extends State<DetailsScreen> {
                           style: TextStyle(
                             height: 1.0,
                             color: Colors.orangeAccent.withOpacity(0.8),
-                            fontSize: 40,
+                            fontSize: 50,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         //------------------------------------------------------------DATE
-                        Text(
-                          widget.dates!,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
+                        Container(
+                          height: 40,
+                          width: 180,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: kColorBudget,
+                          ),
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: Text(
+                              textAlign: TextAlign.center,
+
+                              widget.dates!,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -175,7 +188,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 height: MediaQuery.sizeOf(context).height / 1.6,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  color: const Color(0xFFDAD9D9),
+                  color: kColorCard,
                   boxShadow: const [
                     BoxShadow(
                       color: Colors.black26,
@@ -196,15 +209,12 @@ class _DetailsScreenState extends State<DetailsScreen> {
                         refreshScreen: refreshCardSet,
                         timelineService: timelineService,
                         tripId: widget.tripId,
-                      ),
+                      ), //-------------------------------------------------------TIMELINE
                       Padding(
-                        padding: const EdgeInsets.only(top: 50.0),
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: TimelineWidget(
-                            events: events,
-                            tripId: widget.tripId!,
-                          ),
+                        padding: const EdgeInsets.only(top: 20.0),
+                        child: TimelineWidget(
+                          events: events,
+                          tripId: widget.tripId!,
                         ),
                       ),
                     ],

@@ -10,26 +10,9 @@ class CreationScreen extends StatefulWidget {
 
 class _CreationScreenState extends State<CreationScreen> {
   bool isVisible = false;
-  List<DateTime> dates = [];
+
   String? _currentUserId;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  //------------------------------------------------------------------------------dialog crea/modifica
-  void openTripDialog(BuildContext context) {
-    showDialog(
-      barrierColor: Colors.transparent, // rimuove il grigio
-      context: context,
-      builder: (context) {
-        return saveUpdateTripDialog(
-          onTripSavedAndRefresh: () {
-            return Future.value(true);
-          },
-          dates: dates,
-          currentUserId: _currentUserId!,
-          tripSelected: null,
-        );
-      },
-    );
-  }
 
   //-------------------------------------------------------------------------
   Future<void> _initializeUser() async {
@@ -65,22 +48,6 @@ class _CreationScreenState extends State<CreationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      floatingActionButton: SizedBox(
-        height: 50,
-        width: 50,
-        child: FloatingActionButton(
-          backgroundColor: const Color(0xFFF5AD2B),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(25),
-          ),
-          //aggiungiamo l'operatore perchè l'inizializzazione dell'utente ha un ritardo -perchè lanimazione giri-
-          onPressed: _currentUserId == null
-              ? null
-              : () => openTripDialog(context),
-          child: Icon(Icons.add, size: 40, color: Colors.white),
-        ),
-      ),
       backgroundColor: const Color(0xFF0B161A),
       body: Stack(
         children: [
@@ -142,6 +109,7 @@ class _CreationScreenState extends State<CreationScreen> {
             ),
           ),
           Padding(
+            //---------------------------------------------------la lista
             padding: const EdgeInsets.only(top: 90, left: 25, right: 25),
             child: _currentUserId == null
                 ? Center(
@@ -149,7 +117,7 @@ class _CreationScreenState extends State<CreationScreen> {
                       color: const Color(0xFFF5AD2B),
                     ),
                   )
-                : TripListScreen(userId: _currentUserId!),
+                : TripListScreen(currentUserId: _currentUserId!),
           ),
         ],
       ),

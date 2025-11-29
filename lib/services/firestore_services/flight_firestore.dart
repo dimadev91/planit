@@ -5,6 +5,12 @@ class Flight {
   final String? returnDetails;
   final double? outboundPrice;
   final double? returnPrice;
+  final String? departureAirport;
+  final String? returnAirport;
+  final String? departureIata;
+  final String? returnIata;
+  final String? departureCity;
+  final String? returnCity;
 
   // Costruttore
 
@@ -15,6 +21,12 @@ class Flight {
     this.returnDetails,
     this.outboundPrice,
     this.returnPrice,
+    this.departureAirport,
+    this.returnAirport,
+    this.departureIata,
+    this.returnIata,
+    this.departureCity,
+    this.returnCity,
   });
 
   // Metodo per convertire in Map per l'aggiornamento di Firestore
@@ -26,6 +38,12 @@ class Flight {
       'returnDetails': returnDetails,
       'outboundPrice': outboundPrice,
       'returnPrice': returnPrice,
+      'departureAirport': departureAirport,
+      'returnAirport': returnAirport,
+      'departureIata': departureIata,
+      'returnIata': returnIata,
+      'departureCity': departureCity,
+      'returnCity': returnCity,
     };
   }
 
@@ -39,6 +57,12 @@ class Flight {
       returnDetails: firestoreMap['returnDetails'] as String?,
       outboundPrice: firestoreMap['outboundPrice'] as double?,
       returnPrice: firestoreMap['returnPrice'] as double?,
+      departureAirport: firestoreMap['departureAirport'] as String?,
+      returnAirport: firestoreMap['returnAirport'] as String?,
+      departureIata: firestoreMap['departureIata'] as String?,
+      returnIata: firestoreMap['returnIata'] as String?,
+      departureCity: firestoreMap['departureCity'] as String?,
+      returnCity: firestoreMap['returnCity'] as String?,
     );
   }
 }

@@ -6,6 +6,7 @@ class TimelineEvent {
   final DateTime datetime;
   final String title;
   final IconData icon;
+  final String? location;
   String? description;
   String? duration;
   double? price;
@@ -14,6 +15,7 @@ class TimelineEvent {
     required this.datetime,
     required this.title,
     required this.icon,
+    required this.location,
     this.description,
     this.price,
     this.duration,
@@ -36,6 +38,7 @@ class TimelineEventMapper {
             description: a.activityLocation,
             price: a.activityPrice,
             duration: a.activityDuration?.toString(),
+            location: a.activityLocation,
           ),
         )
         .toList()
@@ -55,6 +58,7 @@ class TimelineEventMapper {
             icon: Icons.restaurant,
             description: f.restLocation,
             price: f.restPriceRange,
+            location: f.restLocation,
           ),
         )
         .toList()

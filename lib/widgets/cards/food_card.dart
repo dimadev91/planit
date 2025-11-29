@@ -104,7 +104,7 @@ class _FoodCardState extends State<FoodCard> {
                   width: 50,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.all(Radius.circular(10)),
-                    color: Color(0xD3C2CCCB),
+                    color: kColorBudget,
                   ),
                   child: Center(
                     child: Text(

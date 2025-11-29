@@ -3,7 +3,10 @@ import 'package:plan_it/services/firestore_services/activity_firestore.dart';
 import 'package:plan_it/services/timeline_event_class.dart';
 import 'package:plan_it/widgets/cards/activity_card.dart';
 import 'package:plan_it/widgets/cards/detailed_card.dart';
+import 'package:plan_it/widgets/cards/empty_flight_card.dart';
+import 'package:plan_it/widgets/cards/empty_hotel_card.dart';
 import 'package:plan_it/widgets/cards/hotel_card.dart';
+import 'package:plan_it/widgets/cards/sample_flight_card.dart';
 
 class CardSet extends StatefulWidget {
   VoidCallback? refreshScreen;
@@ -20,7 +23,10 @@ class CardSet extends StatefulWidget {
   State<CardSet> createState() => _CardSetState();
 }
 
-class _CardSetState extends State<CardSet> {
+class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true; //aggiungo mixin che permette allo stato di rimanere conervato anche quando la pageview cambia pagina
+
   List<Food> foodDetails = [];
   List<Activity> activityDetails = [];
   Hotel? hotelDetails;
@@ -146,7 +152,6 @@ class _CardSetState extends State<CardSet> {
       builder: (context) {
         return SaveUpdateFlights(
           tripDocId: widget.tripId!,
-          //----------------------------------------------------------Chiamerà _fetchTripDetails dopo il salvataggio
           onDataSaved: () async {
             widget.refreshScreen?.call();
             await fetchFlightDetails(); // <-- aggiungi questo
@@ -176,108 +181,127 @@ class _CardSetState extends State<CardSet> {
     return ListView(
       scrollDirection: Axis.vertical,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 30.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      openFlightDialog(context);
-                    },
-                    child:
-                        (flightDetails != null &&
-                            flightDetails!.outboundDateTime != null &&
-                            flightDetails!.returnDateTime != null)
-                        ? FlightCard(
-                            flightDetails: flightDetails,
-                            imageAsset: 'assets/images/cards/aereo.png',
-                            title: 'Flights',
-                          )
-                        : DetailsCard(
-                            imageAsset: 'assets/images/cards/aereo.png',
-                            title: 'Flight',
-                          ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        openHotelDialog(context);
-                      });
-                    },
-                    child:
-                        hotelDetails != null &&
-                            hotelDetails!.checkIn != null &&
-                            hotelDetails!.checkOut != null
-                        ? HotelCard(
-                            imageAsset: 'assets/images/cards/letto.png',
-                            title: 'Hotel',
-                            hotelDetails: hotelDetails,
-                          )
-                        : DetailsCard(
-                            imageAsset: 'assets/images/cards/letto.png',
-                            title: 'Hotel',
-                          ),
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  activityDetails.isNotEmpty
-                      ? ActivityCard(
-                          activityDetails: activityDetails,
-                          tripId: widget.tripId,
-                          imageAsset: 'assets/images/cards/omino.png',
-                          title: 'Activities',
-                          onAdd: () {
-                            openActivitiesDialog(
-                              context,
-                            ); // aggiungi nuova attività
-                          },
-                          onTap: (TimelineEvent event) {
-                            openActivitiesDialog(context, event: event);
-                          },
-                        )
-                      : GestureDetector(
-                          onTap: () {
-                            openActivitiesDialog(context);
-                          },
-                          child: DetailsCard(
+        Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            GestureDetector(
+              onTap: () {
+                openFlightDialog(context);
+              },
+              child:
+                  (flightDetails != null &&
+                      flightDetails!.outboundDateTime != null &&
+                      flightDetails!.returnDateTime != null)
+                  ? SampleFlightCard(
+                      flightDetails: flightDetails,
+                      imageAsset: 'assets/images/cards/aereo.png',
+                      title: 'Flights',
+                    )
+                  : EmptyFlightCard(
+                      imageAsset: 'assets/images/cards/aereo_in_volo.png',
+                      title: 'Flights',
+                    ),
+            ),
+            Row(
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     openFlightDialog(context);
+                    //   },
+                    //   child:
+                    //       (flightDetails != null &&
+                    //           flightDetails!.outboundDateTime != null &&
+                    //           flightDetails!.returnDateTime != null)
+                    //       ? FlightCard(
+                    //           flightDetails: flightDetails,
+                    //           imageAsset: 'assets/images/cards/aereo.png',
+                    //           title: 'Flights',
+                    //         )
+                    //       : DetailsCard(
+                    //           imageAsset: 'assets/images/cards/aereo.png',
+                    //           title: 'Flight',
+                    //         ),
+                    // ),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          openHotelDialog(context);
+                        });
+                      },
+                      child:
+                          hotelDetails != null &&
+                              hotelDetails!.checkIn != null &&
+                              hotelDetails!.checkOut != null
+                          ? HotelCard(
+                              imageAsset: 'assets/images/cards/letto.png',
+                              title: 'Hotel',
+                              hotelDetails: hotelDetails,
+                            )
+                          : EmptyHotelCard(
+                              imageAsset: 'assets/images/cards/hotel_house.png',
+                              title: 'Hotel',
+                            ),
+                    ),
+                  ],
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    activityDetails.isNotEmpty
+                        ? ActivityCard(
+                            activityDetails: activityDetails,
+                            tripId: widget.tripId,
                             imageAsset: 'assets/images/cards/omino.png',
-                            imageHeight: 80,
                             title: 'Activities',
+                            onAdd: () {
+                              openActivitiesDialog(
+                                context,
+                              ); // aggiungi nuova attività
+                            },
+                            onTap: (TimelineEvent event) {
+                              openActivitiesDialog(context, event: event);
+                            },
+                          )
+                        : GestureDetector(
+                            onTap: () {
+                              openActivitiesDialog(context);
+                            },
+                            child: DetailsCard(
+                              imageAsset: 'assets/images/cards/omino.png',
+                              imageHeight: 80,
+                              title: 'Activities',
+                            ),
                           ),
-                        ),
-                  foodDetails.isNotEmpty
-                      ? FoodCard(
-                          foodDetails: foodDetails,
-                          tripId: widget.tripId,
-                          imageAsset: 'assets/images/cards/food.png',
-                          title: 'Food',
-                          onAdd: () {
-                            openFoodDialog(context);
-                          },
-                          onTap: (TimelineEvent event) {
-                            openFoodDialog(context, event: event);
-                          },
-                        )
-                      : GestureDetector(
-                          onTap: () {
-                            openFoodDialog(context);
-                          },
-                          child: DetailsCard(
+                    foodDetails.isNotEmpty
+                        ? FoodCard(
+                            foodDetails: foodDetails,
+                            tripId: widget.tripId,
                             imageAsset: 'assets/images/cards/food.png',
                             title: 'Food',
+                            onAdd: () {
+                              openFoodDialog(context);
+                            },
+                            onTap: (TimelineEvent event) {
+                              openFoodDialog(context, event: event);
+                            },
+                          )
+                        : GestureDetector(
+                            onTap: () {
+                              openFoodDialog(context);
+                            },
+                            child: DetailsCard(
+                              imageAsset: 'assets/images/cards/food.png',
+                              title: 'Food',
+                            ),
                           ),
-                        ),
-                ],
-              ),
-            ],
-          ),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ),
       ],
     );

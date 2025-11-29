@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:plan_it/resource/exports.dart';
+import 'package:plan_it/services/airport_class.dart';
 
 class SaveUpdateFlights extends StatefulWidget {
   final String tripDocId;
@@ -21,12 +24,15 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
   // Dati del volo che saranno caricati e poi modificati
   DateTime? outboundDateTime;
   DateTime? returnDateTime;
-
+  final TextEditingController departureAiportController =
+      TextEditingController();
+  final TextEditingController returnAirportController = TextEditingController();
   final TextEditingController outboundDetailsController =
       TextEditingController();
   final TextEditingController returnDetailsController = TextEditingController();
   final TextEditingController budgetOutbound = TextEditingController();
   final TextEditingController budgetReturn = TextEditingController();
+  late Airport airport;
 
   //---------------------------------------------------------------------formattazione data e orario
   String formatDate(DateTime date) {
@@ -37,70 +43,59 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
     return DateFormat('HH:mm').format(date);
   }
 
-  //----------------------------------------------------------------------METODO PER IL FETCH INTERNO
-  Future<void> _fetchInitialFlight() async {
-    setState(() {
-      _isLoading = true;
-    });
+  //----------------------------------------------------------------------METODO PER IL FETCH INTERNO e visualizzare i dati se un file è modificato
+  Future<void> _loadFlight() async {
+    final flightDetails = await Trip.fetchFlightDetails(widget.tripDocId);
 
-    try {
-      // 1. Scarica l'intero documento Trip
-      final doc = await FirebaseFirestore.instance
-          .collection('trips')
-          .doc(widget.tripDocId)
-          .get();
+    if (flightDetails != null) {
+      outboundDateTime = flightDetails.outboundDateTime;
+      returnDateTime = flightDetails.returnDateTime;
 
-      if (doc.exists && doc.data() != null) {
-        final tripData = doc.data() as Map<String, dynamic>;
-
-        // 2. Estrai solo l'oggetto Flight (potrebbe essere null)
-        final flightMap = tripData['flight'] as Map<String, dynamic>?;
-
-        if (flightMap != null) {
-          final initialFlightDetails = Flight.fromMap(flightMap);
-
-          // 3. Pre-popola lo stato del Dialog
-          outboundDateTime = initialFlightDetails.outboundDateTime;
-          returnDateTime = initialFlightDetails.returnDateTime;
-
-          if (initialFlightDetails.outboundDetails != null) {
-            outboundDetailsController.text =
-                initialFlightDetails.outboundDetails!;
-          }
-          if (initialFlightDetails.returnDetails != null) {
-            returnDetailsController.text = initialFlightDetails.returnDetails!;
-          }
-          if (initialFlightDetails.outboundPrice != null) {
-            budgetOutbound.text = initialFlightDetails.outboundPrice.toString();
-          }
-          if (initialFlightDetails.returnPrice != null) {
-            budgetReturn.text = initialFlightDetails.returnPrice.toString();
-          }
-        }
-      }
-    } catch (e) {
-      print("Errore nel fetch iniziale del volo: $e");
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      departureAiportController.text = flightDetails.departureAirport ?? '';
+      returnAirportController.text = flightDetails.returnAirport ?? '';
+      outboundDetailsController.text = flightDetails.outboundDetails ?? '';
+      returnDetailsController.text = flightDetails.returnDetails ?? '';
+      budgetOutbound.text = flightDetails.outboundPrice?.toString() ?? '';
+      budgetReturn.text = flightDetails.returnPrice?.toString() ?? '';
     }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   //------------------------------------------------------------------------------
   Future<void> _saveFlightDetails() async {
     if (outboundDateTime == null &&
         returnDateTime == null &&
-        outboundDetailsController.text.trim().isEmpty &&
+        outboundDetailsController.text
+            .trim()
+            .isEmpty && //trim serve per eliminare spazi vuoti
         returnDetailsController.text.trim().isEmpty &&
         budgetOutbound.text.trim().isEmpty &&
-        budgetReturn.text.trim().isEmpty) {
+        budgetReturn.text.trim().isEmpty &&
+        departureAiportController.text.trim().isEmpty &&
+        returnAirportController.text.trim().isEmpty) {
       print("Nessun dato volo da salvare o modificare. Chiudo il Dialog.");
       Navigator.pop(context);
       return;
     }
+    final departureAirport = airport.getAirportByName(
+      departureAiportController.text,
+    );
+    final returnAirport = airport.getAirportByName(
+      returnAirportController.text,
+    );
+    if (departureAirport == null || returnAirport == null) {
+      // mostra un alert o un messaggio all'utente
+      print("Errore: aeroporto non trovato.");
+      return;
+    }
 
-    // 1. Crea l'oggetto Flight
+    print('numero 1${departureAirport.iataCode}');
+    print('numero 2${returnAirport.iataCode}');
+
+    // 1. Crea l'oggetto Flight e assegnamo alle proprietà i valori
     final flight = Flight(
       outboundDateTime: outboundDateTime,
       outboundDetails: outboundDetailsController.text.trim().isEmpty
@@ -116,6 +111,16 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
       returnPrice: budgetReturn.text.trim().isEmpty
           ? null
           : double.tryParse(budgetReturn.text),
+      departureAirport: departureAiportController.text.trim().isEmpty
+          ? null
+          : departureAiportController.text,
+      returnAirport: returnAirportController.text.trim().isEmpty
+          ? null
+          : returnAirportController.text,
+      departureIata: departureAirport.iataCode,
+      returnIata: returnAirport.iataCode,
+      departureCity: departureAirport.city,
+      returnCity: returnAirport.city,
     );
 
     // 2. Ottieni la mappa da salvare
@@ -147,7 +152,9 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
   void initState() {
     super.initState();
     // Avvia il fetch dei dati del volo non appena il Dialog si apre
-    _fetchInitialFlight();
+    _loadFlight();
+    airport = Airport();
+    airport.loadAirportsData().then((_) => _loadFlight());
   }
 
   // Pulizia delle risorse
@@ -157,6 +164,8 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
     returnDetailsController.dispose();
     budgetOutbound.dispose();
     budgetReturn.dispose();
+    departureAiportController.dispose();
+    returnAirportController.dispose();
     super.dispose();
   }
 
@@ -172,6 +181,7 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
     }
 
     return Dialog(
+      insetPadding: const EdgeInsets.only(left: 35, right: 35),
       backgroundColor: Colors.transparent,
       child: Stack(
         children: [
@@ -180,6 +190,7 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
               Navigator.pop(context);
             },
             child: Container(
+              //-----------------modal barrier
               height: double.infinity,
               width: double.infinity,
               color: Colors.transparent,
@@ -302,21 +313,35 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
-                                  const SizedBox(width: 10),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    'Outbound flight',
-                                    style: TextStyle(
-                                      color: Colors.black.withOpacity(0.4),
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
+                                  const SizedBox(width: 5),
+                                  //--------------------------------------------AEROPORTO ANDATA
+                                  SizedBox(
+                                    height: 40,
+                                    width: 220,
+                                    child: TextField(
+                                      style: TextStyle(
+                                        color: Colors.black.withOpacity(0.4),
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      controller: departureAiportController,
+                                      decoration: kTextFieldAdd.copyWith(
+                                        hintText: 'Departure Airport',
+                                        hintStyle: TextStyle(
+                                          color: Colors.black.withOpacity(0.4),
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+
+                                      onChanged: (value) {},
                                     ),
                                   ),
                                 ],
                               ),
                               //----------------------------------------------------DATE
                               Padding(
-                                padding: const EdgeInsets.only(top: 15),
+                                padding: const EdgeInsets.only(top: 5),
                                 child: GestureDetector(
                                   onTap: () async {
                                     final selectedDate =
@@ -354,10 +379,10 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
                                   SizedBox(width: 5),
                                   SizedBox(
                                     height: 40,
-                                    width: 100,
+                                    width: 220,
 
                                     child: TextField(
-                                      //--------------------------------------------------dettagli opzionale
+                                      //------------------------------------------dettagli opzionale
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 18,
@@ -411,17 +436,33 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
                               const SizedBox(height: 10),
                               //----------------------------------------------------RITORNO
                               Padding(
-                                padding: const EdgeInsets.only(left: 10.0),
+                                padding: const EdgeInsets.only(left: 4),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      'Return flight',
-                                      style: TextStyle(
-                                        color: Colors.black.withOpacity(0.4),
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
+                                    //--------------------------------------------AEROPORTO RITORNO
+                                    SizedBox(
+                                      height: 40,
+                                      width: 220,
+                                      child: TextField(
+                                        style: TextStyle(
+                                          color: Colors.black.withOpacity(0.4),
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        controller: returnAirportController,
+                                        decoration: kTextFieldAdd.copyWith(
+                                          hintText: 'Return Airport',
+                                          hintStyle: TextStyle(
+                                            color: Colors.black.withOpacity(
+                                              0.4,
+                                            ),
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+
+                                        onChanged: (value) {},
                                       ),
                                     ),
                                   ],
@@ -429,10 +470,7 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
                               ),
                               //----------------------------------------------------DATE
                               Padding(
-                                padding: const EdgeInsets.only(
-                                  top: 10,
-                                  left: 18,
-                                ),
+                                padding: const EdgeInsets.only(left: 18),
                                 child: GestureDetector(
                                   onTap: () async {
                                     final selectedDate =
@@ -469,7 +507,7 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
                                   SizedBox(width: 5),
                                   SizedBox(
                                     height: 40,
-                                    width: 100,
+                                    width: 220,
                                     child: TextField(
                                       //--------------------------------------------------dettagli opzionale
                                       style: const TextStyle(

@@ -1,12 +1,13 @@
 import 'package:plan_it/resource/exports.dart';
 
 const kColorDivider = Color(0x1F21373D);
-const kColorBigCard = Color(0xFFD9D8D8);
+const kColorMiniCard = Color(0xFFD4E1E0);
+const kColorBudget = Color(0x325D7881);
 final kRadiusCard = BorderRadius.all(Radius.circular(20));
 final kShadowCard = [
   BoxShadow(color: Color(0x3F3A3D3D), blurRadius: 20, spreadRadius: 2),
 ];
-const kColorCard = Color(0xFFD9D8D8);
+const kColorCard = Color(0xFFFAFAFA);
 const kColorAccent = Color(0xFF628580);
 const kMainColor = Color(0xFFEC9B27);
 const kMainColorFade = Color(0xFFEFB86A);

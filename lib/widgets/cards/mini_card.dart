@@ -25,7 +25,7 @@ class MiniCard extends StatelessWidget {
             margin: EdgeInsets.symmetric(vertical: 2),
             padding: EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: Color(0xFFBCD0CF),
+              color: kColorMiniCard,
               borderRadius: BorderRadius.all(Radius.circular(18)),
             ),
             child: Stack(

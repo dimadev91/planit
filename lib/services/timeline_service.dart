@@ -31,6 +31,7 @@ class TimelineService {
                 datetime: flights.outboundDateTime!,
                 title: 'Outbound',
                 icon: Icons.flight_takeoff,
+                location: '',
               ),
             );
           }
@@ -40,6 +41,7 @@ class TimelineService {
                 datetime: flights.returnDateTime!,
                 title: 'Return',
                 icon: Icons.flight_land,
+                location: '',
               ),
             );
           }
@@ -54,6 +56,7 @@ class TimelineService {
                 datetime: _parseTimestamp(flightMap['outboundDateTime']),
                 title: 'Outbound',
                 icon: Icons.flight_takeoff,
+                location: flightMap['location'] ?? '',
               ),
             );
           }
@@ -63,6 +66,7 @@ class TimelineService {
                 datetime: _parseTimestamp(flightMap['returnDateTime']),
                 title: 'Return',
                 icon: Icons.flight_land,
+                location: flightMap['location'] ?? '',
               ),
             );
           }
@@ -79,6 +83,7 @@ class TimelineService {
                 datetime: hotel.checkIn!,
                 title: 'Check-in',
                 icon: Icons.local_hotel_outlined,
+                location: hotel.hotelLocation ?? '',
               ),
             );
           }
@@ -88,6 +93,7 @@ class TimelineService {
                 datetime: hotel.checkOut!,
                 title: 'Check-out',
                 icon: Icons.local_hotel_outlined,
+                location: hotel.hotelLocation ?? '',
               ),
             );
           }
@@ -101,6 +107,7 @@ class TimelineService {
                 datetime: _parseTimestamp(hotelMap['checkIn']),
                 title: 'Check-in',
                 icon: Icons.local_hotel_outlined,
+                location: hotelMap['location'] ?? '',
               ),
             );
           }
@@ -110,6 +117,7 @@ class TimelineService {
                 datetime: _parseTimestamp(hotelMap['checkOut']),
                 title: 'Check-out',
                 icon: Icons.local_hotel_outlined,
+                location: hotelMap['location'] ?? '',
               ),
             );
           }
@@ -131,6 +139,7 @@ class TimelineService {
                 description: food.restLocation,
                 icon: Icons.restaurant, // Icona per il cibo
                 price: food.restPriceRange,
+                location: food.restLocation,
               ),
             );
           }
@@ -153,6 +162,7 @@ class TimelineService {
                     : activity.activityTime!,
                 title: activity.activityName!,
                 icon: Icons.directions_run_outlined,
+                location: activity.activityLocation,
               ),
             );
           }

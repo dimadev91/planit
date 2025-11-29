@@ -91,7 +91,7 @@ class _ActivityCardState extends State<ActivityCard> {
                   width: 63,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.all(Radius.circular(20)),
-                    color: Color(0xFFC2CCCB),
+                    color: kColorBudget,
                   ),
                   child: Center(
                     child: Text(

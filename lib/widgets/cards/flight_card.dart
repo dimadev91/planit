@@ -83,19 +83,22 @@ class _FlightCardState extends State<FlightCard> {
           children: [
             budget == null
                 ? Container()
-                : Align(
-                    alignment: Alignment.bottomRight,
-                    child: Container(
-                      height: 27,
-                      width: 63,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                        color: Color(0xFFC2CCCB),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '\$$budget',
-                          style: TextStyle(color: Colors.black),
+                : Padding(
+                    padding: const EdgeInsets.all(5.0),
+                    child: Align(
+                      alignment: Alignment.bottomRight,
+                      child: Container(
+                        height: 27,
+                        width: 63,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                          color: kColorBudget,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '\$$budget',
+                            style: TextStyle(color: Colors.black),
+                          ),
                         ),
                       ),
                     ),

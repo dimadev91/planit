@@ -62,6 +62,23 @@ class TripCard extends StatelessWidget {
     }
   }
 
+  //----------------------------------funzione per gestire il  menu impostazioni
+  void _handleMenuSelection(BuildContext context, String action) {
+    switch (action) {
+      // ... (case 'image')
+
+      case 'edit':
+        final docId = trip.id;
+        if (docId != null) {
+          openTripDialog(context);
+        }
+        break;
+      case 'delete':
+        _deleteTrip(context); // CHIAMA LA FUNZIONE DI ELIMINAZIONE
+        break;
+    }
+  }
+
   //----------------------------------------------------------------dialog
   void openTripDialog(BuildContext context) {
     showDialog(
@@ -79,23 +96,6 @@ class TripCard extends StatelessWidget {
         );
       },
     );
-  }
-
-  //----------------------------------funzione per gestire il  menu impostazioni
-  void _handleMenuSelection(BuildContext context, String action) {
-    switch (action) {
-      // ... (case 'image')
-
-      case 'edit':
-        final docId = trip.id;
-        if (docId != null) {
-          openTripDialog(context);
-        }
-        break;
-      case 'delete':
-        _deleteTrip(context); // CHIAMA LA FUNZIONE DI ELIMINAZIONE
-        break;
-    }
   }
 
   @override
@@ -129,9 +129,10 @@ class TripCard extends StatelessWidget {
                         ),
                       );
                     },
+                    //-------------------------------------------------dimoensioni card
                     child: Container(
                       width: double.infinity,
-                      height: 190,
+                      height: 200,
                       decoration: BoxDecoration(
                         color: Color(0xFFAEC1C5).withOpacity(0.8),
                         borderRadius: BorderRadius.circular(25),
@@ -165,95 +166,100 @@ class TripCard extends StatelessWidget {
                             children: [
                               //------------------------------------------------sposta titoli a destra
                               Container(width: 100, height: double.infinity),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  //--------------------------------------------TITOLO
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 20.0),
-                                    child: SizedBox(
-                                      width: 200,
-                                      child: Text(
-                                        trip.title,
-                                        style: TextStyle(
-                                          color: Colors.orangeAccent,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 27,
-                                          height: 1.2,
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 10.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    //--------------------------------------------TITOLO
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 20.0,
+                                      ),
+                                      child: SizedBox(
+                                        width: 200,
+                                        child: Text(
+                                          trip.title,
+                                          style: TextStyle(
+                                            color: Colors.orangeAccent,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 27,
+                                            height: 1.2,
+                                          ),
+                                          maxLines: 2, // massimo 2 righe
+                                          // overflow: TextOverflow
+                                          //     .ellipsis, // mostra "..." se supera le righe
+                                          softWrap: true,
                                         ),
-                                        maxLines: 2, // massimo 2 righe
-                                        // overflow: TextOverflow
-                                        //     .ellipsis, // mostra "..." se supera le righe
-                                        softWrap: true,
                                       ),
                                     ),
-                                  ),
-                                  //--------------------------------------------------DESCRIZIONE
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 20),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
+                                    //--------------------------------------------------DESCRIZIONE
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 20),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          SizedBox(
+                                            width: 200,
+                                            child: Text(
+                                              trip.description!,
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 18,
+                                              ),
+                                              maxLines: 2, // massimo 2 righe
+                                              overflow: TextOverflow
+                                                  .ellipsis, // mostra "..." se supera le righe
+                                              softWrap: true,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    SizedBox(height: 5),
+                                    Container(
+                                      height: 2,
+                                      color: Color(0xFF061215),
+                                    ),
+                                    //-------------------------------------divisorio
+                                    Row(
                                       children: [
-                                        SizedBox(
-                                          width: 200,
-                                          child: Text(
-                                            trip.description!,
+                                        SizedBox(width: 20),
+                                        Container(
+                                          height: 2,
+                                          width: 150,
+                                          color: Color(0xFF274851),
+                                        ),
+                                      ],
+                                    ),
+                                    //--------------------------------------------DATE
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        top: 5,
+                                        left: 15,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.calendar_month_outlined,
+                                            color: Colors.white,
+                                            size: 30,
+                                          ),
+                                          SizedBox(width: 10),
+                                          Text(
+                                            '${_formatDates(trip.startDate)}\n${_formatDates(trip.endDate)}',
                                             style: TextStyle(
                                               color: Colors.white,
-                                              fontSize: 18,
+                                              fontSize: 17,
                                             ),
-                                            maxLines: 2, // massimo 2 righe
-                                            overflow: TextOverflow
-                                                .ellipsis, // mostra "..." se supera le righe
-                                            softWrap: true,
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Container(
-                                    height: 2,
-                                    color: Color(0xFF061215),
-                                  ),
-                                  //-------------------------------------divisorio
-                                  Row(
-                                    children: [
-                                      SizedBox(width: 20),
-                                      Container(
-                                        height: 2,
-                                        width: 150,
-                                        color: Color(0xFF274851),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                  //--------------------------------------------DATE
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      top: 5,
-                                      left: 15,
                                     ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.calendar_month_outlined,
-                                          color: Colors.white,
-                                          size: 30,
-                                        ),
-                                        SizedBox(width: 10),
-                                        Text(
-                                          '${_formatDates(trip.startDate)}\n${_formatDates(trip.endDate)}',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 17,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),

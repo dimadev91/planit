@@ -128,7 +128,7 @@ class _SaveUpdateHotelState extends State<SaveUpdateHotel> {
           ? _formattaPlacemark(placemarks.first)
           : query;
 
-      // Se vuoi includere anche il nome dell’hotel
+      // Se si include anche il nome dell’hotel
       if (hotelName != null && hotelName.isNotEmpty) {
         formattedAddress = '$hotelName, $formattedAddress';
       }

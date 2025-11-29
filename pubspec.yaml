@@ -57,6 +57,7 @@ dependencies:
   geocoding: ^4.0.0
 
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -86,6 +87,8 @@ flutter:
     - assets/svg/
     - assets/images/shading/
     - assets/images/cards/
+    - assets/json/airports.json
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -115,6 +118,7 @@ flutter:
           weight: 500
         - asset: fonts/Orbiton/Orbitron-Regular.ttf
           weight: 400
+
 
   #
   # For details regarding fonts from package dependencies,
