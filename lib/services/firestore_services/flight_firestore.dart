@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+
 class Flight {
   final DateTime? outboundDateTime; // Data E ora di partenza
   final String? outboundDetails;
@@ -64,5 +67,88 @@ class Flight {
       departureCity: firestoreMap['departureCity'] as String?,
       returnCity: firestoreMap['returnCity'] as String?,
     );
+  }
+
+  static Future<void> saveUpdateFlight({
+    outboundDateTime,
+    returnDateTime,
+    outboundDetailsController,
+    returnDetailsController,
+    budgetOutbound,
+    budgetReturn,
+    departureAiportController,
+    returnAirportController,
+    context,
+    airport,
+    tripDocId,
+    destinationId,
+  }) async {
+    if (outboundDateTime == null &&
+        returnDateTime == null &&
+        outboundDetailsController.text
+            .trim()
+            .isEmpty && //trim serve per eliminare spazi vuoti
+        returnDetailsController.text.trim().isEmpty &&
+        budgetOutbound.text.trim().isEmpty &&
+        budgetReturn.text.trim().isEmpty &&
+        departureAiportController.text.trim().isEmpty &&
+        returnAirportController.text.trim().isEmpty) {
+      print("Nessun dato volo da salvare o modificare. Chiudo il Dialog.");
+      Navigator.pop(context);
+    }
+    final departureAirport = airport.getAirportByName(
+      departureAiportController.text,
+    );
+    final returnAirport = airport.getAirportByName(
+      returnAirportController.text,
+    );
+    if (departureAirport == null || returnAirport == null) {
+      // mostra un alert o un messaggio all'utente
+      print("Errore: aeroporto non trovato.");
+    }
+    // 1. Crea l'oggetto Flight e assegnamo alle proprietà i valori
+    final flight = Flight(
+      outboundDateTime: outboundDateTime,
+      outboundDetails: outboundDetailsController.text.trim().isEmpty
+          ? null
+          : outboundDetailsController.text,
+      returnDateTime: returnDateTime,
+      returnDetails: returnDetailsController.text.trim().isEmpty
+          ? null
+          : returnDetailsController.text,
+      outboundPrice: budgetOutbound.text.trim().isEmpty
+          ? null
+          : double.tryParse(budgetOutbound.text),
+      returnPrice: budgetReturn.text.trim().isEmpty
+          ? null
+          : double.tryParse(budgetReturn.text),
+      departureAirport: departureAiportController.text.trim().isEmpty
+          ? null
+          : departureAiportController.text,
+      returnAirport: returnAirportController.text.trim().isEmpty
+          ? null
+          : returnAirportController.text,
+      departureIata: departureAirport.iataCode,
+      returnIata: returnAirport.iataCode,
+      departureCity: departureAirport.city,
+      returnCity: returnAirport.city,
+    );
+
+    // 2. Ottieni la mappa da salvare
+    final flightMap = flight.toMap();
+
+    // 3. Aggiorna il documento Trip in Firestore
+    try {
+      print(flightMap);
+      await FirebaseFirestore.instance
+          .collection('trips')
+          .doc(tripDocId)
+          .collection('destination')
+          .doc(destinationId)
+          .update({'flights': flightMap});
+      print("Dettagli Volo salvati/aggiornati con successo.");
+    } catch (e) {
+      print("!!! Errore durante il salvataggio dei dettagli volo: $e");
+    }
   }
 }

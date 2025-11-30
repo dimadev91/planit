@@ -5,11 +5,16 @@ import 'package:plan_it/services/airport_class.dart';
 
 class SaveUpdateFlights extends StatefulWidget {
   final String tripDocId;
+  final String destinationId;
   final VoidCallback?
   onDataSaved; // Manteniamo la callback per il refresh esterno
 
   // Non accettiamo più initialFlight, carichiamo i dati internamente.
-  SaveUpdateFlights({required this.tripDocId, this.onDataSaved});
+  SaveUpdateFlights({
+    required this.tripDocId,
+    this.onDataSaved,
+    required this.destinationId,
+  });
 
   @override
   State<SaveUpdateFlights> createState() => _SaveUpdateFlightsState();
@@ -46,7 +51,10 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
 
   //----------------------------------------------------------------------METODO PER IL FETCH INTERNO e visualizzare i dati se un file è modificato
   Future<void> _loadFlight() async {
-    final flightDetails = await Trip.fetchFlightDetails(widget.tripDocId);
+    final flightDetails = await Trip.fetchFlightDetails(
+      destinationId: widget.destinationId,
+      tripDocId: widget.tripDocId,
+    );
 
     if (flightDetails != null) {
       outboundDateTime = flightDetails.outboundDateTime;
@@ -67,80 +75,20 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
 
   //------------------------------------------------------------------------------
   Future<void> _saveFlightDetails() async {
-    if (outboundDateTime == null &&
-        returnDateTime == null &&
-        outboundDetailsController.text
-            .trim()
-            .isEmpty && //trim serve per eliminare spazi vuoti
-        returnDetailsController.text.trim().isEmpty &&
-        budgetOutbound.text.trim().isEmpty &&
-        budgetReturn.text.trim().isEmpty &&
-        departureAiportController.text.trim().isEmpty &&
-        returnAirportController.text.trim().isEmpty) {
-      print("Nessun dato volo da salvare o modificare. Chiudo il Dialog.");
-      Navigator.pop(context);
-      return;
-    }
-    final departureAirport = airport.getAirportByName(
-      departureAiportController.text,
-    );
-    final returnAirport = airport.getAirportByName(
-      returnAirportController.text,
-    );
-    if (departureAirport == null || returnAirport == null) {
-      // mostra un alert o un messaggio all'utente
-      print("Errore: aeroporto non trovato.");
-      return;
-    }
-    // 1. Crea l'oggetto Flight e assegnamo alle proprietà i valori
-    final flight = Flight(
+    Flight.saveUpdateFlight(
       outboundDateTime: outboundDateTime,
-      outboundDetails: outboundDetailsController.text.trim().isEmpty
-          ? null
-          : outboundDetailsController.text,
       returnDateTime: returnDateTime,
-      returnDetails: returnDetailsController.text.trim().isEmpty
-          ? null
-          : returnDetailsController.text,
-      outboundPrice: budgetOutbound.text.trim().isEmpty
-          ? null
-          : double.tryParse(budgetOutbound.text),
-      returnPrice: budgetReturn.text.trim().isEmpty
-          ? null
-          : double.tryParse(budgetReturn.text),
-      departureAirport: departureAiportController.text.trim().isEmpty
-          ? null
-          : departureAiportController.text,
-      returnAirport: returnAirportController.text.trim().isEmpty
-          ? null
-          : returnAirportController.text,
-      departureIata: departureAirport.iataCode,
-      returnIata: returnAirport.iataCode,
-      departureCity: departureAirport.city,
-      returnCity: returnAirport.city,
+      outboundDetailsController: outboundDetailsController,
+      returnDetailsController: returnDetailsController,
+      budgetOutbound: budgetOutbound,
+      budgetReturn: budgetReturn,
+      departureAiportController: departureAiportController,
+      returnAirportController: returnAirportController,
+      context: context,
+      airport: airport,
+      tripDocId: widget.tripDocId,
+      destinationId: widget.destinationId,
     );
-
-    // 2. Ottieni la mappa da salvare
-    final flightMap = flight.toMap();
-
-    // 3. Aggiorna il documento Trip in Firestore
-    try {
-      await FirebaseFirestore.instance.collection('trips').doc(widget.tripDocId).set(
-        {
-          // 💡 CORREZIONE: Usiamo 'destinations.flights' per nidificare i voli
-          'destinations.flights': flightMap,
-        },
-        SetOptions(
-          merge:
-              true, // Mantiene tutti gli altri campi del documento e crea il campo 'destinations' se non esiste.
-        ),
-      );
-      print("Dettagli Volo salvati/aggiornati con successo.");
-
-      // ... (omesso codice callback e Navigator.pop)
-    } catch (e) {
-      print("!!! Errore durante il salvataggio dei dettagli volo: $e");
-    }
   }
 
   @override
@@ -148,6 +96,7 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
     super.initState();
     // Avvia il fetch dei dati del volo non appena il Dialog si apre
     _loadFlight();
+    print(widget.destinationId);
     airport = Airport();
     airport.loadAirportsData();
   }
@@ -565,7 +514,8 @@ class _SaveUpdateFlightsState extends State<SaveUpdateFlights> {
                           GestureDetector(
                             onTap: () async {
                               await _saveFlightDetails();
-                              // Navigator.pop è già in _saveFlightDetails
+                              Navigator.pop(context);
+                              widget.onDataSaved?.call();
                             },
                             child: Container(
                               decoration: const BoxDecoration(

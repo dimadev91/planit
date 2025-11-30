@@ -204,7 +204,7 @@ class TripCard extends StatelessWidget {
                                           SizedBox(
                                             width: 200,
                                             child: Text(
-                                              trip.description!,
+                                              trip.description ?? '',
                                               style: TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 18,

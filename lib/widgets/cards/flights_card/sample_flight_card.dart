@@ -115,7 +115,7 @@ class _SampleFlightCardState extends State<SampleFlightCard> {
         ),
         child: Stack(
           children: [
-            budget == null
+            budget == ''
                 ? Container()
                 : Padding(
                     //-----------------------------------budget

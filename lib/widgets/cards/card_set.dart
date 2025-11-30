@@ -37,6 +37,7 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
   Flight? flightDetails;
   Destination? destinationDetails;
   List<Destination> destinationDetailsList = [];
+  String? destinationId;
 
   //------------------------------------------------------------------------------FETCH DETAILS
   Future<void> fetchFoodDetails() async {
@@ -63,16 +64,19 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
   }
 
   Future<void> fetchFlightDetails() async {
-    final newFlight = await Trip.fetchFlightDetails(widget.tripId!);
+    final newFlight = await Trip.fetchFlightDetails(
+      destinationId: destinationId ?? '',
+      tripDocId: widget.tripId!,
+    );
     setState(() {
       flightDetails = newFlight;
     });
+    print(flightDetails);
   }
 
   Future<void> fetchDestinationDetails() async {
     final newDestination = await Trip.fetchDestinationDetails(widget.tripId!);
     setState(() {
-      print('Destination Details: $newDestination');
       destinationDetailsList = newDestination;
     });
   }
@@ -85,6 +89,7 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
       context: context,
       builder: (context) {
         return DestinationDialog(
+          destinationId: destinationId,
           tripDocId: widget.tripId!,
           onDataSaved: () async {
             widget.refreshScreen?.call();
@@ -182,6 +187,7 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
       context: context,
       builder: (context) {
         return SaveUpdateFlights(
+          destinationId: destinationId ?? '',
           tripDocId: widget.tripId!,
           onDataSaved: () async {
             await fetchFlightDetails();
@@ -197,15 +203,22 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
     );
   }
 
+  //----------------------------------------------------------------------------
+  void setDesId(String id) async {
+    setState(() {
+      destinationId = id;
+    });
+    fetchFlightDetails();
+  }
+
   //------------------------------------------------------------------------------INIT E BUILD
   @override
   void initState() {
     super.initState();
+    fetchDestinationDetails();
     fetchFoodDetails();
     fetchActivityDetails();
     fetchHotelDetails();
-    fetchFlightDetails();
-    fetchDestinationDetails();
   }
 
   @override
@@ -225,6 +238,7 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
                   //     destinationDetails!.cityName != null &&
                   //     destinationDetails!.countryName != null
                   ? DestinationCard(
+                      setDesId: setDesId,
                       destinationDetails: destinationDetails,
                       destinations: destinationDetailsList,
                       title: 'Destination',

@@ -6,11 +6,13 @@ class DestinationCard extends StatefulWidget {
   final String title;
   Destination? destinationDetails;
   List<Destination>? destinations;
+  void Function(String)? setDesId;
 
   DestinationCard({
     required this.title,
     required this.destinationDetails,
     this.destinations,
+    this.setDesId,
   });
 
   @override
@@ -18,32 +20,39 @@ class DestinationCard extends StatefulWidget {
 }
 
 class _DestinationCardState extends State<DestinationCard> {
-  String? city;
-  String? country;
+  List<Destination> destinationsCard = [];
+
+  //----------------------------------------------------------------------------funzione per evitare crush in caso di list null
+  Future<void> loadDestinations() async {
+    final list =
+        widget.destinations ??
+        []; //vuota per evitare crush se non ci sono destinazioni
+    setState(() {
+      destinationsCard = list;
+    });
+  }
+
+  //----------------------------------------------------------------------------funzione per assegnare il primo id in caso non si sia ancora girata pagina-che lo assegna-
+  Future<void> loadFirstId() async {
+    if (widget.destinations == null) return;
+
+    final firstDestination = await widget.destinations![0];
+    final firstId = firstDestination.id;
+    widget.setDesId?.call(firstId!); // callback verso il padre
+  }
 
   @override
   void initState() {
     super.initState();
-    final dest = widget.destinationDetails;
-    if (dest != null) {
-      city = dest.cityName;
-      country = dest.countryName;
-    }
-    print('City: $city, Country: $country');
+    loadDestinations();
+    loadFirstId();
   }
 
   @override
   void didUpdateWidget(covariant DestinationCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.destinationDetails != oldWidget.destinationDetails) {
-      //se quello vecchio e nuovo non corrispondono riesgue la riassegnazione delle variabili
-      final dest = widget.destinationDetails;
-      if (dest != null) {
-        setState(() {
-          city = dest.cityName;
-          country = dest.countryName;
-        });
-      }
+      loadDestinations();
     }
   }
 
@@ -60,9 +69,14 @@ class _DestinationCardState extends State<DestinationCard> {
           borderRadius: kRadiusCard,
         ),
         child: PageView.builder(
-          itemCount: widget.destinations?.length,
+          onPageChanged: (index) {
+            final destination = destinationsCard[index];
+            widget.setDesId?.call(destination.id!); // callback verso il padre
+          },
+          itemCount: destinationsCard.length,
           itemBuilder: (context, index) {
-            final destination = widget.destinations![index];
+            final destination =
+                destinationsCard[index]; //mettiamo qui lindex per evitarlo di riscriverlo poi, potremmo riscriverlo per ogni variabile listName[index].proprietà
             return Center(
               child: Text(
                 '${destination.cityName}, ${destination.countryName}',

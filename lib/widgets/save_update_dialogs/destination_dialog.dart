@@ -7,8 +7,13 @@ class DestinationDialog extends StatefulWidget {
   final String tripDocId;
   final VoidCallback?
   onDataSaved; // Manteniamo la callback per il refresh esterno
+  final String? destinationId;
 
-  DestinationDialog({required this.tripDocId, this.onDataSaved});
+  DestinationDialog({
+    required this.tripDocId,
+    this.onDataSaved,
+    this.destinationId,
+  });
 
   @override
   State<DestinationDialog> createState() => _DestinationDialogState();
@@ -37,6 +42,19 @@ class _DestinationDialogState extends State<DestinationDialog> {
   void emptyAllFields() {
     cityNameController.clear();
     countryNameController.clear();
+  }
+
+  Future<void> loadDestination() async {
+    if (widget.destinationId == null) return;
+    destinationDetails = await Trip.fetchSingleDestinationDetails(
+      widget.tripDocId,
+      widget.destinationId!,
+    );
+    if (destinationDetails != null) {
+      cityNameController.text = destinationDetails!.cityName ?? '';
+      countryNameController.text = destinationDetails!.countryName ?? '';
+    }
+    setState(() {});
   }
 
   Future<void> saveUpdateDestination() async {
@@ -84,6 +102,7 @@ class _DestinationDialogState extends State<DestinationDialog> {
   @override
   void initState() {
     super.initState();
+    loadDestination();
     // _loadDestination();
   }
 
@@ -91,6 +110,8 @@ class _DestinationDialogState extends State<DestinationDialog> {
   void dispose() {
     cityNameController.dispose();
     countryNameController.dispose();
+    searchController.dispose();
+    mapPickerController.dispose();
     super.dispose();
   }
 

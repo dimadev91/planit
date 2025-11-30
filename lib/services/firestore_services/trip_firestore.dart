@@ -94,6 +94,26 @@ class Trip {
     }
   }
 
+  //------------------------------------------------------restituisce i data fino alla destination
+  //   static Future<Map<String, dynamic>?> fetchDestinationData(
+  //       String tripDocId) async {
+  //     try {
+  //       final doc = await FirebaseFirestore.instance
+  //           .collection('trips')
+  //           .doc(tripDocId)
+  //           .collection('destination') // Naviga alla subcollezione
+  //           .get(); // crea lo snapshot
+  //
+  //
+  //
+  //       if (doc.exists && doc.data() != null) {
+  //         return doc.data() as Map<String, dynamic>;
+  //       }}
+  //     catch (e) {
+  //       print("Error fetching destinations from subcollection: $e");
+  //     }
+  //     return null;
+  //   }
   // -------------------------- Fetch Trip
   static Future<Trip?> fetchTripDetails(String id) async {
     try {
@@ -142,20 +162,48 @@ class Trip {
     }
   }
 
-  // -------------------------- Fetch Flight
-  static Future<Flight?> fetchFlightDetails(String tripDocId) async {
-    try {
-      // Usa la funzione base
-      final tripData = await fetchTripData(tripDocId);
+  //----------------------------------------------------------per restituire un singolo oggetto
+  static Future<Destination?> fetchSingleDestinationDetails(
+    String tripDocId,
+    String destinationId,
+  ) async {
+    final destinationData = await FirebaseFirestore.instance
+        .collection('trips')
+        .doc(tripDocId)
+        .collection('destination') // Naviga alla subcollezione
+        .doc(destinationId)
+        .get(); // crea lo snapshot
+    if (destinationData.exists) {
+      return Destination.fromMap(
+        destinationData.data() as Map<String, dynamic>,
+        destinationId,
+      );
+    } else {
+      return null;
+    }
+  }
 
-      // Controlla se tripData NON è nullo
-      if (tripData != null) {
-        final flightMap = tripData['flight'] as Map<String, dynamic>?;
-        if (flightMap != null) return Flight.fromMap(flightMap);
+  // -------------------------- Fetch Flight
+  static Future<Flight?> fetchFlightDetails({
+    required String tripDocId,
+    required String destinationId,
+  }) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('trips')
+          .doc(tripDocId)
+          .collection('destination')
+          .doc(destinationId)
+          .get();
+
+      if (doc.exists && doc.data()!.containsKey('flights')) {
+        final flightMap = doc['flights'] as Map<String, dynamic>;
+        return Flight.fromMap(flightMap);
       }
+
       return null;
     } catch (e) {
-      print("Error fetching the flight: $e");
+      print("Errore fetch flight: $e");
       return null;
     }
   }

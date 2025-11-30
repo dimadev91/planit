@@ -4,6 +4,7 @@ import 'package:plan_it/services/timeline_event_class.dart';
 
 class TimelineService {
   String tripId = '';
+
   TimelineService({required this.tripId});
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -23,7 +24,10 @@ class TimelineService {
 
       // -------------------- FLIGHT --------------------
       if (!kIsWeb) {
-        final flights = await Trip.fetchFlightDetails(tripId);
+        final flights = await Trip.fetchFlightDetails(
+          tripDocId: tripId,
+          destinationId: '',
+        );
         if (flights != null) {
           if (flights.outboundDateTime != null) {
             timelining.add(
