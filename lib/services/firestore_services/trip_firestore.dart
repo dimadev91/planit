@@ -142,6 +142,7 @@ class Trip {
           .collection('trips')
           .doc(tripDocId)
           .collection('destination') // Naviga alla subcollezione
+          .orderBy('createdAt', descending: true)
           .get(); // crea lo snapshot
 
       // destinationData.docs è l'elenco dei documenti trovati.
@@ -209,18 +210,26 @@ class Trip {
   }
 
   // -------------------------- Fetch Hotel
-  static Future<Hotel?> fetchHotelDetails(String tripDocId) async {
+  static Future<Hotel?> fetchHotelDetails(
+    String tripDocId,
+    String destinationId,
+  ) async {
     try {
-      // Usa la funzione base
-      final tripData = await fetchTripData(tripDocId);
+      final doc = await FirebaseFirestore.instance
+          .collection('trips')
+          .doc(tripDocId)
+          .collection('destination')
+          .doc(destinationId)
+          .get();
 
-      if (tripData != null) {
-        final hotelMap = tripData['hotel'] as Map<String, dynamic>?;
-        if (hotelMap != null) return Hotel.fromMap(hotelMap);
+      if (doc.exists && doc.data()!.containsKey('hotel')) {
+        final flightMap = doc['hotel'] as Map<String, dynamic>;
+        return Hotel.fromMap(flightMap);
       }
+
       return null;
     } catch (e) {
-      print("Error fetching the hotel: $e");
+      print("Errore fetch flight: $e");
       return null;
     }
   }

@@ -40,8 +40,10 @@ class _DestinationDialogState extends State<DestinationDialog> {
   // }
 
   void emptyAllFields() {
-    cityNameController.clear();
-    countryNameController.clear();
+    setState(() {
+      cityNameController.clear();
+      countryNameController.clear();
+    });
   }
 
   Future<void> loadDestination() async {

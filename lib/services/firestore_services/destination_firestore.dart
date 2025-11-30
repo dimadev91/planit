@@ -4,10 +4,16 @@ class Destination {
   String? cityName;
   String? countryName;
   String? id;
-  Destination({this.cityName, this.countryName, this.id});
+  Timestamp? createdAt;
+
+  Destination({this.cityName, this.countryName, this.id, this.createdAt});
 
   Map<String, dynamic> toMap() {
-    return {'cityName': cityName, 'countryName': countryName};
+    return {
+      'cityName': cityName,
+      'countryName': countryName,
+      'createdAt': FieldValue.serverTimestamp(),
+    };
   }
 
   static Future<String?> saveUpdateDestination(
@@ -23,6 +29,7 @@ class Destination {
       cityName: cityName,
       countryName: countryName,
       id: '',
+      createdAt: Timestamp.now(),
     );
     final destinationMap = destination.toMap();
 
@@ -44,6 +51,7 @@ class Destination {
       cityName: map['cityName'],
       countryName: map['countryName'],
       id: destinationid,
+      createdAt: map['createdAt'],
     );
   }
 }

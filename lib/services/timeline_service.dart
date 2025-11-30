@@ -79,7 +79,7 @@ class TimelineService {
 
       // -------------------- HOTEL --------------------
       if (!kIsWeb) {
-        final hotel = await Trip.fetchHotelDetails(tripId);
+        final hotel = await Trip.fetchHotelDetails(tripId, '');
         if (hotel != null) {
           if (hotel.checkIn != null) {
             timelining.add(

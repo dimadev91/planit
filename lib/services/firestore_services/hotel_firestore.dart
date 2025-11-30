@@ -47,4 +47,58 @@ class Hotel {
       hotelPrice: firestoreMap['hotelPrice'] as double?,
     );
   }
+  static Future<void> SaveUpdateHotel({
+    checkinDateTime,
+    checkoutDateTime,
+    hotelNameController,
+    hotelLocationController,
+    priceController,
+    context,
+    tripDocId,
+    destinationId,
+  }) async {
+    if (checkinDateTime == null &&
+        checkoutDateTime == null &&
+        hotelNameController.text.trim().isEmpty &&
+        hotelLocationController.text.trim().isEmpty &&
+        priceController.text.trim().isEmpty) {
+      print("Nessun dato volo da salvare o modificare. Chiudo il Dialog.");
+      return;
+    }
+
+    // 1. Crea l'oggetto Hotel
+    final hotel = Hotel(
+      checkIn: checkinDateTime,
+      hotelName: hotelNameController.text.trim().isEmpty
+          ? null
+          : hotelNameController.text,
+      checkOut: checkoutDateTime,
+      hotelLocation: hotelLocationController.text.trim().isEmpty
+          ? null
+          : hotelLocationController.text,
+      hotelPrice: priceController.text.trim().isEmpty
+          ? null
+          : double.tryParse(priceController.text),
+    );
+
+    // 2. la mappa da salvare
+    final hotelMap = hotel.toMap();
+
+    // 3. Aggiorna il documento Trip in Firestore
+    try {
+      await FirebaseFirestore.instance
+          .collection('trips')
+          .doc(tripDocId) // Usa l'ID del viaggio ricevuto
+          .collection('destination')
+          .doc(destinationId)
+          .update({
+            'hotel': hotelMap, // Salva la Mappa 'hotel' nel documento Trip
+          });
+      print("✅ Hotel updated successfully.");
+
+      // ✅ CHIAMATA DI CALLBACK: Chiamiamo il refresh della schermata padre
+    } catch (e) {
+      print("!!! Error during hotel update: $e");
+    }
+  }
 }

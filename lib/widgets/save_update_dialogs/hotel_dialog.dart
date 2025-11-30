@@ -2,10 +2,15 @@ import 'package:plan_it/resource/exports.dart';
 
 class SaveUpdateHotel extends StatefulWidget {
   final String tripDocId;
+  final String destinationId;
   final VoidCallback?
   onDataSaved; // Manteniamo la callback per il refresh esterno
 
-  SaveUpdateHotel({required this.tripDocId, this.onDataSaved});
+  SaveUpdateHotel({
+    required this.tripDocId,
+    this.onDataSaved,
+    required this.destinationId,
+  });
 
   @override
   State<SaveUpdateHotel> createState() => _SaveUpdateHotelState();
@@ -26,7 +31,10 @@ class _SaveUpdateHotelState extends State<SaveUpdateHotel> {
   final TextEditingController priceController = TextEditingController();
 
   Future<void> _loadHotel() async {
-    hotelDetails = await Trip.fetchHotelDetails(widget.tripDocId);
+    hotelDetails = await Trip.fetchHotelDetails(
+      widget.tripDocId,
+      widget.destinationId,
+    );
     if (hotelDetails != null) {
       checkinDateTime = hotelDetails!.checkIn;
       checkoutDateTime = hotelDetails!.checkOut;
@@ -41,51 +49,18 @@ class _SaveUpdateHotelState extends State<SaveUpdateHotel> {
 
   //------------------------------------------------------------------------------
   Future<void> _saveHotelDetails() async {
-    if (checkinDateTime == null &&
-        checkoutDateTime == null &&
-        hotelNameController.text.trim().isEmpty &&
-        hotelLocationController.text.trim().isEmpty &&
-        priceController.text.trim().isEmpty) {
-      print("Nessun dato volo da salvare o modificare. Chiudo il Dialog.");
-      Navigator.pop(context);
-      return;
-    }
-
-    // 1. Crea l'oggetto Hotel
-    final hotel = Hotel(
-      checkIn: checkinDateTime,
-      hotelName: hotelNameController.text.trim().isEmpty
-          ? null
-          : hotelNameController.text,
-      checkOut: checkoutDateTime,
-      hotelLocation: hotelLocationController.text.trim().isEmpty
-          ? null
-          : hotelLocationController.text,
-      hotelPrice: priceController.text.trim().isEmpty
-          ? null
-          : double.tryParse(priceController.text),
+    print("Saving hotel details...");
+    Hotel.SaveUpdateHotel(
+      checkinDateTime: checkinDateTime,
+      checkoutDateTime: checkoutDateTime,
+      hotelNameController: hotelNameController,
+      hotelLocationController: hotelLocationController,
+      priceController: priceController,
+      context: context,
+      tripDocId: widget.tripDocId,
+      destinationId: widget.destinationId,
     );
-
-    // 2. la mappa da salvare
-    final hotelMap = hotel.toMap();
-
-    // 3. Aggiorna il documento Trip in Firestore
-    try {
-      await FirebaseFirestore.instance
-          .collection('trips')
-          .doc(widget.tripDocId) // Usa l'ID del viaggio ricevuto
-          .update({
-            'hotel': hotelMap, // Salva la Mappa 'hotel' nel documento Trip
-          });
-      print("✅ Hotel updated successfully.");
-
-      // ✅ CHIAMATA DI CALLBACK: Chiamiamo il refresh della schermata padre
-      if (widget.onDataSaved != null) {
-        widget.onDataSaved!();
-      }
-    } catch (e) {
-      print("!!! Error during hotel update: $e");
-    }
+    print("Hotel details saved successfully.");
   }
 
   String _formattaPlacemark(Placemark p) {
@@ -451,6 +426,7 @@ class _SaveUpdateHotelState extends State<SaveUpdateHotel> {
                                               hotelDetails?.hotelName ??
                                               'Hotel\'s name',
                                           style: kDialogTextStyle,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ],
                                     ),
@@ -673,10 +649,9 @@ class _SaveUpdateHotelState extends State<SaveUpdateHotel> {
                           GestureDetector(
                             onTap: () async {
                               await _saveHotelDetails();
-                              if (!mounted)
-                                return; // se il widget è già smontato non fare nulla
                               await _loadHotel();
                               Navigator.pop(context);
+                              widget.onDataSaved?.call();
                             },
                             child: Container(
                               decoration: const BoxDecoration(

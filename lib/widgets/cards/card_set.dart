@@ -6,10 +6,10 @@ import 'package:plan_it/widgets/cards/activity_card.dart';
 import 'package:plan_it/widgets/cards/destination_card.dart';
 import 'package:plan_it/widgets/cards/detailed_card.dart';
 import 'package:plan_it/widgets/cards/empty_destination_card.dart';
-import 'package:plan_it/widgets/cards/empty_hotel_card.dart';
 import 'package:plan_it/widgets/cards/flights_card/empty_flight_card.dart';
 import 'package:plan_it/widgets/cards/flights_card/sample_flight_card.dart';
-import 'package:plan_it/widgets/cards/hotel_card.dart';
+import 'package:plan_it/widgets/cards/hotel_card/empty_hotel_card.dart';
+import 'package:plan_it/widgets/cards/hotel_card/sample_hotel_card.dart';
 import 'package:plan_it/widgets/save_update_dialogs/destination_dialog.dart';
 
 class CardSet extends StatefulWidget {
@@ -57,7 +57,10 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
   }
 
   Future<void> fetchHotelDetails() async {
-    final newHotel = await Trip.fetchHotelDetails(widget.tripId!);
+    final newHotel = await Trip.fetchHotelDetails(
+      widget.tripId!,
+      destinationId ?? '',
+    );
     setState(() {
       hotelDetails = newHotel;
     });
@@ -162,6 +165,7 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
       context: context,
       builder: (context) {
         return SaveUpdateHotel(
+          destinationId: destinationId ?? '',
           tripDocId: widget.tripId!,
           onDataSaved: () async {
             widget.refreshScreen?.call();
@@ -209,6 +213,7 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
       destinationId = id;
     });
     fetchFlightDetails();
+    fetchHotelDetails();
   }
 
   //------------------------------------------------------------------------------INIT E BUILD
@@ -218,7 +223,6 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
     fetchDestinationDetails();
     fetchFoodDetails();
     fetchActivityDetails();
-    fetchHotelDetails();
   }
 
   @override
@@ -299,8 +303,8 @@ class _CardSetState extends State<CardSet> with AutomaticKeepAliveClientMixin {
                           hotelDetails != null &&
                               hotelDetails!.checkIn != null &&
                               hotelDetails!.checkOut != null
-                          ? HotelCard(
-                              imageAsset: 'assets/images/cards/letto.png',
+                          ? SampleHotelCard(
+                              imageAsset: 'assets/images/cards/hotel_house.png',
                               title: 'Hotel',
                               hotelDetails: hotelDetails,
                             )
